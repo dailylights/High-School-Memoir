@@ -1064,7 +1064,7 @@
             if (memoir.images && memoir.images.length > 0) {
                 imagesHtml = '<div class="post-images">';
                 memoir.images.forEach(img => {
-                    imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                    imagesHtml += `<img src="${escapeHtml(img)}" onclick="window.open('${escapeHtml(img)}', '_blank')">`;
                 });
                 imagesHtml += '</div>';
             }

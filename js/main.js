@@ -944,7 +944,7 @@ async function loadTopics() {
         if (data.success) {
             datalist.innerHTML = '';
             data.topics.forEach(t => {
-                datalist.innerHTML += `<option value="${t.name}">`;
+                datalist.innerHTML += `<option value="${escapeHtml(t.name)}">`;
             });
         }
     } catch (e) {

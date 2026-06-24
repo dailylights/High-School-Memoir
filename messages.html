@@ -782,7 +782,7 @@
             
             list.innerHTML = conversations.map(conv => `
                 <div class="conversation-item ${conv.unread_count > 0 ? 'unread' : ''} ${conv.conversation_id == currentConversationId ? 'active' : ''}" 
-                     onclick="openConversation(${conv.conversation_id}, ${conv.partner_id}, '${escapeHtml(conv.partner_name)}', '${conv.partner_avatar || ''}', '${escapeHtml(conv.partner_class || '')}')">
+                     onclick="openConversation(${conv.conversation_id}, ${conv.partner_id}, '${escapeHtml(conv.partner_name)}', '${escapeHtml(conv.partner_avatar || '')}', '${escapeHtml(conv.partner_class || '')}')">
                     <div class="avatar">
                         ${getAvatarHtml({name: conv.partner_name, avatar: conv.partner_avatar})}
                         ${conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count > 99 ? '99+' : conv.unread_count}</span>` : ''}
@@ -831,7 +831,7 @@
                 
                 if (data.success && data.users.length > 0) {
                     document.getElementById('modal-user-list').innerHTML = data.users.map(user => `
-                        <div class="user-list-item" onclick="startConversation(${user.id}, '${escapeHtml(user.name)}', '${user.avatar || ''}', '${escapeHtml(user.class || '')}')">
+                        <div class="user-list-item" onclick="startConversation(${user.id}, '${escapeHtml(user.name)}', '${escapeHtml(user.avatar || '')}', '${escapeHtml(user.class || '')}')">
                             ${getAvatarHtml(user)}
                             <div class="user-info">
                                 <div class="user-name">${escapeHtml(user.name)}</div>
@@ -1090,7 +1090,7 @@
                 
                 if (data.success && data.users.length > 0) {
                     results.innerHTML = data.users.map(user => `
-                        <div class="search-result-item" onclick="startConversation(${user.id}, '${escapeHtml(user.name)}', '${user.avatar || ''}', '${escapeHtml(user.class || '')}')">
+                        <div class="search-result-item" onclick="startConversation(${user.id}, '${escapeHtml(user.name)}', '${escapeHtml(user.avatar || '')}', '${escapeHtml(user.class || '')}')">
                             ${getAvatarHtml(user, '32px', '0.8rem')}
                             <div>
                                 <div class="user-name">${escapeHtml(user.name)}</div>
