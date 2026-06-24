@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级空间 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .class-space-container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .class-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-bottom: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .class-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .class-header-content {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .class-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            flex-shrink: 0;
+        }
+
+        .class-info {
+            flex: 1;
+        }
+
+        .class-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .class-desc {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .class-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .class-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .class-actions .btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-light {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .btn-light:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-light {
+            background: transparent;
+            color: white;
+            border: 2px solid white !important;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .invite-code-box {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .invite-code-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .invite-code-value {
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .copy-code-btn {
+            background: white;
+            color: var(--primary-color);
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            gap: 5px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: #f0f0ff;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .home-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .member-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .member-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .member-role {
+            font-size: 0.8rem;
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .member-role.monitor {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .member-role.vice_monitor {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .member-role.member {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .member-class {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .member-admin-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .member-menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #999;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5b4cc4;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .album-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .album-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .album-cover {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-info {
+            padding: 12px;
+        }
+
+        .album-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+        }
+
+        .album-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .post-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .post-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .post-info {
+            flex: 1;
+        }
+
+        .post-author {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .post-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .post-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .post-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .post-images img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: #888;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .action-btn.active {
+            color: var(--primary-color);
+        }
+
+        .role-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 150px;
+            display: none;
+            z-index: 100;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        .dropdown-item.danger {
+            color: #e74c3c;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .class-header {
+                padding: 25px;
+            }
+            
+            .class-header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .class-name {
+                font-size: 1.5rem;
+            }
+            
+            .class-meta {
+                justify-content: center;
+            }
+            
+            .tab-nav {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'">High School Memoir</div>
+        <div class="search-bar" onclick="window.location.href='search.html'" style="cursor: pointer;">
+            <span>🔍</span>
+            <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
+        </div>
+        <div class="nav-links" id="nav-auth"></div>
+    </nav>
+
+    <div class="class-space-container">
+        <div id="class-header-section"></div>
+        
+        <div class="tab-nav" id="tab-nav" style="display: none;">
+            <button class="tab-btn active" onclick="switchTab('home', this)">🏠 首页</button>
+            <button class="tab-btn" onclick="switchTab('memoirs', this)">📝 班级动态</button>
+            <button class="tab-btn" onclick="switchTab('albums', this)">📷 班级相册</button>
+            <button class="tab-btn" onclick="switchTab('members', this)">👥 成员</button>
+            <button class="tab-btn" id="manage-tab-btn" style="display: none;" onclick="switchTab('manage', this)">⚙️ 管理</button>
+        </div>
+
+        <div class="tab-content active" id="tab-home"></div>
+        <div class="tab-content" id="tab-memoirs"></div>
+        <div class="tab-content" id="tab-albums"></div>
+        <div class="tab-content" id="tab-members"></div>
+        <div class="tab-content" id="tab-manage"></div>
+    </div>
+
+    <!-- 编辑班级模态框 -->
+    <div class="modal-overlay" id="edit-class-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑班级信息</h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form onsubmit="handleEditClass(event)">
+                <div class="form-group">
+                    <label>班级名称 *</label>
+                    <input type="text" id="edit-name-input" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>班级简介</label>
+                    <textarea id="edit-desc-input" maxlength="500"></textarea>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="edit-private-input">
+                    <label for="edit-private-input" style="margin: 0;">设为私有班级（仅成员可查看）</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let classInfo = null;
+        let classId = null;
+        let currentTab = 'home';
+        let memoirsPage = 1;
+        let albumsPage = 1;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            classId = parseInt(urlParams.get('id') || 0);
+            
+            if (!classId) {
+                alert('无效的班级ID');
+                window.location.href = 'classes.html';
+                return;
+            }
+            
+            const checkUser = () => {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (typeof currentUser !== 'undefined' && currentUser) {
+                            highlightNav();
+                            resolve(true);
+                        } else if (typeof currentUser !== 'undefined' && !currentUser) {
+                            resolve(false);
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    setTimeout(check, 50);
+                });
+            };
+            
+            const userReady = await checkUser();
+            if (userReady) {
+                loadClassDetail();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function highlightNav() {
+            const navAuth = document.getElementById('nav-auth');
+            if (!navAuth) return;
+            
+            const classLink = navAuth.querySelector('a[href="classes.html"]');
+            if (classLink) {
+                classLink.style.color = 'var(--primary-color)';
+                classLink.style.fontWeight = 'bold';
+            }
+        }
+
+        function getRoleLabel(role) {
+            const labels = {
+                'monitor': '👑 班长',
+                'vice_monitor': '🎖️ 副班长',
+                'member': '👤 成员'
+            };
+            return labels[role] || '👤 成员';
+        }
+
+        function getAvatarHtml(user, size = '45px') {
+            if (user.avatar) {
+                return `<div class="post-avatar" style="width:${size}; height:${size};"><img src="${user.avatar}"></div>`;
+            }
+            const name = user.name || user.author_name || '?';
+            return `<div class="post-avatar" style="width:${size}; height:${size}; font-size: 1rem;">${name[0]}</div>`;
+        }
+
+        async function loadClassDetail() {
+            try {
+                const res = await fetch(API_BASE + `classes.php?action=detail&class_id=${classId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    classInfo = data.class;
+                    renderClassHeader();
+                    renderTabNav();
+                    loadTabContent('home');
+                } else {
+                    alert(data.message);
+                    window.location.href = 'classes.html';
+                }
+            } catch (e) {
+                console.error("Load class detail failed", e);
+                alert('加载班级信息失败');
+            }
+        }
+
+        function renderClassHeader() {
+            const header = document.getElementById('class-header-section');
+            const isMember = classInfo.is_member;
+            const isMonitor = classInfo.my_role === 'monitor' || classInfo.my_role === 'vice_monitor';
+            
+            let actionsHtml = '';
+            let inviteCodeHtml = '';
+            
+            if (isMember) {
+                actionsHtml = `
+                    <button class="btn btn-outline-light" onclick="leaveClass()">退出班级</button>
+                `;
+                
+                if (isMonitor) {
+                    inviteCodeHtml = `
+                        <div class="invite-code-box">
+                            <span class="invite-code-label">邀请码：</span>
+                            <span class="invite-code-value">${classInfo.invite_code}</span>
+                            <button class="copy-code-btn" onclick="copyInviteCode()">复制</button>
+                        </div>
+                    `;
+                }
+            } else {
+                actionsHtml = `
+                    <button class="btn btn-light" onclick="joinClass()">加入班级</button>
+                `;
+            }
+            
+            if (isMonitor) {
+                actionsHtml = `
+                    <button class="btn btn-light" onclick="openEditModal()">编辑</button>
+                    ${actionsHtml}
+                `;
+            }
+            
+            header.innerHTML = `
+                <div class="class-header">
+                    <div class="class-header-content">
+                        <div class="class-avatar">🏫</div>
+                        <div class="class-info">
+                            <div class="class-name">${escapeHtml(classInfo.name)}</div>
+                            <div class="class-desc">${escapeHtml(classInfo.description || '暂无简介')}</div>
+                            <div class="class-meta">
+                                <span>👥 ${classInfo.member_count} 人</span>
+                                <span>📅 创立于 ${new Date(classInfo.created_at).toLocaleDateString()}</span>
+                                ${classInfo.is_private ? '<span>🔒 私有班级</span>' : ''}
+                                ${isMember ? `<span>${getRoleLabel(classInfo.my_role)}</span>` : ''}
+                            </div>
+                            ${inviteCodeHtml}
+                        </div>
+                        <div class="class-actions">${actionsHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTabNav() {
+            const nav = document.getElementById('tab-nav');
+            nav.style.display = 'flex';
+            
+            if (classInfo.is_member) {
+                document.getElementById('manage-tab-btn').style.display = 
+                    (classInfo.my_role === 'monitor' || classInfo.my_role === 'vice_monitor') ? 'block' : 'none';
+            }
+        }
+
+        function switchTab(tab, btn) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (btn) {
+                btn.classList.add('active');
+            } else {
+                document.querySelector(`.tab-btn[onclick*="switchTab('${tab}'"]`)?.classList.add('active');
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            loadTabContent(tab);
+        }
+
+        function loadTabContent(tab) {
+            switch(tab) {
+                case 'home':
+                    loadHomeTab();
+                    break;
+                case 'memoirs':
+                    loadMemoirsTab();
+                    break;
+                case 'albums':
+                    loadAlbumsTab();
+                    break;
+                case 'members':
+                    loadMembersTab();
+                    break;
+                case 'manage':
+                    loadManageTab();
+                    break;
+            }
+        }
+
+        async function loadHomeTab() {
+            const tab = document.getElementById('tab-home');
+            
+            try {
+                const [membersRes, memoirsRes, albumsRes] = await Promise.all([
+                    fetch(API_BASE + `classes.php?action=members&class_id=${classId}`),
+                    fetch(API_BASE + `classes.php?action=memoirs&class_id=${classId}&limit=3`),
+                    fetch(API_BASE + `classes.php?action=albums&class_id=${classId}&limit=6`)
+                ]);
+                
+                const [membersData, memoirsData, albumsData] = await Promise.all([
+                    membersRes.json(),
+                    memoirsRes.json(),
+                    albumsRes.json()
+                ]);
+                
+                const memberCount = membersData.success ? membersData.members.length : 0;
+                const memoirCount = memoirsData.success ? memoirsData.pagination.total : 0;
+                const albumCount = albumsData.success ? albumsData.pagination.total : 0;
+                
+                tab.innerHTML = `
+                    <div class="home-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value">${memberCount}</div>
+                            <div class="stat-label">班级成员</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📝</div>
+                            <div class="stat-value">${memoirCount}</div>
+                            <div class="stat-label">班级动态</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📷</div>
+                            <div class="stat-value">${albumCount}</div>
+                            <div class="stat-label">班级相册</div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 15px;">👥 成员（${memberCount}人）</h3>
+                    <div class="members-grid" id="home-members-grid"></div>
+                    
+                    <h3 style="margin: 30px 0 15px;">📝 最新动态</h3>
+                    <div id="home-memoirs-list"></div>
+                `;
+                
+                if (membersData.success) {
+                    document.getElementById('home-members-grid').innerHTML = 
+                        membersData.members.slice(0, 8).map(m => renderMemberCard(m, false)).join('');
+                }
+                
+                if (memoirsData.success && memoirsData.memoirs.length > 0) {
+                    document.getElementById('home-memoirs-list').innerHTML = 
+                        memoirsData.memoirs.map(m => renderMemoirCard(m)).join('');
+                } else {
+                    document.getElementById('home-memoirs-list').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div style="color: #888;">暂无班级动态</div>
+                        </div>
+                    `;
+                }
+                
+            } catch (e) {
+                console.error("Load home tab failed", e);
+                tab.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        async function loadMemoirsTab(page = 1) {
+            memoirsPage = page;
+            const tab = document.getElementById('tab-memoirs');
+            
+            if (!classInfo.is_member) {
+                tab.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔒</div>
+                        <div class="empty-state-text">仅班级成员可查看动态</div>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="joinClass()">加入班级</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            tab.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `classes.php?action=memoirs&class_id=${classId}&page=${page}&limit=10`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (data.memoirs.length === 0) {
+                        tab.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <div class="empty-state-text">暂无班级动态</div>
+                                <div class="empty-state-hint">快去发布第一条动态吧</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    tab.innerHTML = data.memoirs.map(m => renderMemoirCard(m)).join('');
+                    
+                    if (data.pagination.total_pages > 1) {
+                        tab.innerHTML += renderPagination(data.pagination, loadMemoirsTab);
+                    }
+                }
+            } catch (e) {
+                console.error("Load memoirs failed", e);
+                tab.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderMemoirCard(memoir) {
+            let imagesHtml = '';
+            if (memoir.images && memoir.images.length > 0) {
+                imagesHtml = '<div class="post-images">';
+                memoir.images.forEach(img => {
+                    imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                });
+                imagesHtml += '</div>';
+            }
+            
+            const likeClass = memoir.is_liked > 0 ? 'active' : '';
+            
+            return `
+                <div class="post-card">
+                    <div class="post-header">
+                        ${getAvatarHtml(memoir)}
+                        <div class="post-info">
+                            <div class="post-author">${escapeHtml(memoir.author_name)}</div>
+                            <div class="post-time">${new Date(memoir.created_at).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">${escapeHtml(memoir.content)}</div>
+                    ${imagesHtml}
+                    <div class="post-actions">
+                        <div class="action-btn ${likeClass}">
+                            <span>❤️</span> <span>${memoir.likes_count}</span>
+                        </div>
+                        <div class="action-btn">
+                            <span>💬</span> <span>${memoir.comments_count}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadAlbumsTab(page = 1) {
+            albumsPage = page;
+            const tab = document.getElementById('tab-albums');
+            
+            if (!classInfo.is_member) {
+                tab.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔒</div>
+                        <div class="empty-state-text">仅班级成员可查看相册</div>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="joinClass()">加入班级</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            tab.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `classes.php?action=albums&class_id=${classId}&page=${page}&limit=12`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (data.albums.length === 0) {
+                        tab.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📷</div>
+                                <div class="empty-state-text">暂无班级相册</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    tab.innerHTML = '<div class="albums-grid">' + 
+                        data.albums.map(album => `
+                            <div class="album-card" onclick="window.location.href='albums.html'">
+                                <div class="album-cover">
+                                    ${album.cover_image ? `<img src="${album.cover_image}">` : '📷'}
+                                </div>
+                                <div class="album-info">
+                                    <div class="album-name">${escapeHtml(album.name)}</div>
+                                    <div class="album-stats">
+                                        <span>📸 ${album.photo_count} 张</span>
+                                        <span>👤 ${escapeHtml(album.author_name)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') + '</div>';
+                    
+                    if (data.pagination.total_pages > 1) {
+                        tab.innerHTML += renderPagination(data.pagination, loadAlbumsTab);
+                    }
+                }
+            } catch (e) {
+                console.error("Load albums failed", e);
+                tab.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        async function loadMembersTab() {
+            const tab = document.getElementById('tab-members');
+            
+            if (!classInfo.is_member) {
+                tab.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔒</div>
+                        <div class="empty-state-text">仅班级成员可查看成员列表</div>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="joinClass()">加入班级</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            tab.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `classes.php?action=members&class_id=${classId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    const isMonitor = classInfo.my_role === 'monitor' || classInfo.my_role === 'vice_monitor';
+                    
+                    tab.innerHTML = `
+                        <h3 style="margin-bottom: 20px;">班级成员（${data.members.length}人）</h3>
+                        <div class="members-grid">
+                            ${data.members.map(m => renderMemberCard(m, isMonitor)).join('')}
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error("Load members failed", e);
+                tab.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderMemberCard(member, showAdmin = false) {
+            const avatar = member.avatar 
+                ? `<img src="${member.avatar}">` 
+                : member.name[0];
+            
+            let adminHtml = '';
+            if (showAdmin && member.role !== 'monitor' && classInfo.my_role === 'monitor') {
+                adminHtml = `
+                    <div class="member-admin-actions">
+                        <div class="role-dropdown">
+                            <button class="member-menu-btn" onclick="toggleMemberMenu(event, ${member.user_id})">⋮</button>
+                            <div class="dropdown-menu" id="member-menu-${member.user_id}">
+                                ${member.role !== 'vice_monitor' ? `<div class="dropdown-item" onclick="changeRole(${member.user_id}, 'vice_monitor')">设为副班长</div>` : ''}
+                                ${member.role === 'vice_monitor' ? `<div class="dropdown-item" onclick="changeRole(${member.user_id}, 'member')">取消副班长</div>` : ''}
+                                <div class="dropdown-item danger" onclick="removeMember(${member.user_id})">移除成员</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="member-card">
+                    ${adminHtml}
+                    <div class="member-avatar">${avatar}</div>
+                    <div class="member-name">${escapeHtml(member.name)}</div>
+                    <div class="member-role ${member.role}">${getRoleLabel(member.role)}</div>
+                    <div class="member-class">${escapeHtml(member.user_class || '')}</div>
+                </div>
+            `;
+        }
+
+        function loadManageTab() {
+            const tab = document.getElementById('tab-manage');
+            const isMonitor = classInfo.my_role === 'monitor';
+            
+            tab.innerHTML = `
+                <h3 style="margin-bottom: 20px;">班级管理</h3>
+                <div style="display: grid; gap: 20px; max-width: 600px;">
+                    <div class="stat-card" style="text-align: left; cursor: pointer;" onclick="openEditModal()">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem;">📝</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1rem;">编辑班级信息</div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">修改班级名称、简介、隐私设置</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${isMonitor ? `
+                    <div class="stat-card" style="text-align: left; cursor: pointer; border-left: 4px solid #e74c3c;" onclick="deleteClass()">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem;">🗑️</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1rem; color: #e74c3c;">解散班级</div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">删除班级及所有相关数据（不可恢复）</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderPagination(pagination, loadFunc) {
+            const { page, total_pages } = pagination;
+            
+            let html = '<div class="pagination">';
+            html += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="${loadFunc.name}(${page - 1})">上一页</button>`;
+            
+            for (let i = 1; i <= total_pages; i++) {
+                if (i === 1 || i === total_pages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="${loadFunc.name}(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += '<span style="padding: 0 5px; color: #888;">...</span>';
+                }
+            }
+            
+            html += `<button class="page-btn" ${page === total_pages ? 'disabled' : ''} onclick="${loadFunc.name}(${page + 1})">下一页</button>`;
+            html += '</div>';
+            
+            return html;
+        }
+
+        function toggleMemberMenu(event, userId) {
+            event.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== `member-menu-${userId}`) {
+                    menu.classList.remove('active');
+                }
+            });
+            document.getElementById(`member-menu-${userId}`).classList.toggle('active');
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('active');
+            });
+        });
+
+        async function changeRole(userId, newRole) {
+            if (!confirm(`确定要修改该成员的角色吗？`)) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'change_role');
+                formData.append('class_id', classId);
+                formData.append('user_id', userId);
+                formData.append('new_role', newRole);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('修改成功');
+                    loadMembersTab();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Change role failed", e);
+                alert('修改失败');
+            }
+        }
+
+        async function removeMember(userId) {
+            if (!confirm('确定要移除该成员吗？')) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'remove_member');
+                formData.append('class_id', classId);
+                formData.append('user_id', userId);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('已移除该成员');
+                    loadClassDetail();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Remove member failed", e);
+                alert('移除失败');
+            }
+        }
+
+        async function joinClass() {
+            const inviteCode = prompt('请输入邀请码：');
+            if (!inviteCode) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'join');
+                formData.append('invite_code', inviteCode);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('加入成功！');
+                    loadClassDetail();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Join class failed", e);
+                alert('加入失败');
+            }
+        }
+
+        async function leaveClass() {
+            if (!confirm('确定要退出班级吗？')) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'leave');
+                formData.append('class_id', classId);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('已退出班级');
+                    window.location.href = 'classes.html';
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Leave class failed", e);
+                alert('退出失败');
+            }
+        }
+
+        function openEditModal() {
+            document.getElementById('edit-name-input').value = classInfo.name;
+            document.getElementById('edit-desc-input').value = classInfo.description || '';
+            document.getElementById('edit-private-input').checked = classInfo.is_private == 1;
+            document.getElementById('edit-class-modal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-class-modal').classList.remove('active');
+        }
+
+        async function handleEditClass(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('edit-name-input').value.trim();
+            const description = document.getElementById('edit-desc-input').value.trim();
+            const isPrivate = document.getElementById('edit-private-input').checked ? 1 : 0;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'update');
+                formData.append('class_id', classId);
+                formData.append('name', name);
+                formData.append('description', description);
+                formData.append('is_private', isPrivate);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('更新成功');
+                    closeEditModal();
+                    loadClassDetail();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Update class failed", e);
+                alert('更新失败');
+            }
+        }
+
+        async function deleteClass() {
+            if (!confirm('确定要解散班级吗？此操作不可恢复，所有班级数据都将被删除！')) return;
+            if (!confirm('再次确认：真的要解散班级吗？')) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('class_id', classId);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('班级已解散');
+                    window.location.href = 'classes.html';
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Delete class failed", e);
+                alert('删除失败');
+            }
+        }
+
+        function copyInviteCode() {
+            navigator.clipboard.writeText(classInfo.invite_code).then(() => {
+                alert('邀请码已复制！');
+            }).catch(() => {
+                alert('复制失败，请手动复制：' + classInfo.invite_code);
+            });
+        }
+    </script>
+</body>
+</html>

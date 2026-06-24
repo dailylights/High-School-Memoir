@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的班级 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .classes-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .classes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .classes-header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5b4cc4;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0ff;
+        }
+
+        .join-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .join-section label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .join-section input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .join-section input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .classes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .class-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .class-cover {
+            height: 140px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .class-cover-icon {
+            font-size: 3rem;
+            color: white;
+        }
+
+        .class-role-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .class-role-badge.monitor {
+            color: #e67e22;
+        }
+
+        .class-role-badge.vice_monitor {
+            color: #27ae60;
+        }
+
+        .class-role-badge.member {
+            color: #3498db;
+        }
+
+        .class-info {
+            padding: 20px;
+        }
+
+        .class-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .class-desc {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .class-stats {
+            display: flex;
+            justify-content: space-between;
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-hint {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: auto;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 30px 0 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'">High School Memoir</div>
+        <div class="search-bar" onclick="window.location.href='search.html'" style="cursor: pointer;">
+            <span>🔍</span>
+            <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
+        </div>
+        <div class="nav-links" id="nav-auth"></div>
+    </nav>
+
+    <div class="classes-container">
+        <div class="classes-header">
+            <h1>🏫 我的班级</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openCreateModal()">+ 创建班级</button>
+            </div>
+        </div>
+
+        <div class="join-section">
+            <label>🔑 加入班级：</label>
+            <input type="text" id="invite-code-input" placeholder="输入邀请码" maxlength="8">
+            <button class="btn btn-primary" onclick="joinClass()">加入</button>
+        </div>
+
+        <div class="section-title">我加入的班级</div>
+        <div id="classes-grid" class="classes-grid">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #888;">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 创建班级模态框 -->
+    <div class="modal-overlay" id="create-class-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>创建班级</h2>
+                <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <form onsubmit="handleCreateClass(event)">
+                <div class="form-group">
+                    <label>班级名称 *</label>
+                    <input type="text" id="class-name-input" required maxlength="100" placeholder="例如：高三(1)班">
+                </div>
+                <div class="form-group">
+                    <label>班级简介</label>
+                    <textarea id="class-desc-input" placeholder="介绍一下这个班级..." maxlength="500"></textarea>
+                </div>
+                <div class="form-group form-check">
+                    <input type="checkbox" id="class-private-input">
+                    <label for="class-private-input">设为私有班级（仅成员可查看）</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let myClasses = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const checkUser = () => {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (typeof currentUser !== 'undefined' && currentUser) {
+                            resolve(true);
+                        } else if (typeof currentUser !== 'undefined' && !currentUser) {
+                            resolve(false);
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    setTimeout(check, 50);
+                });
+            };
+            
+            const userReady = await checkUser();
+            if (userReady) {
+                highlightNav();
+                loadMyClasses();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function highlightNav() {
+            const navAuth = document.getElementById('nav-auth');
+            if (!navAuth) return;
+            
+            const classLink = navAuth.querySelector('a[href="classes.html"]');
+            if (classLink) {
+                classLink.style.color = 'var(--primary-color)';
+                classLink.style.fontWeight = 'bold';
+            }
+        }
+
+        function getRoleLabel(role) {
+            const labels = {
+                'monitor': '👑 班长',
+                'vice_monitor': '🎖️ 副班长',
+                'member': '👤 成员'
+            };
+            return labels[role] || '👤 成员';
+        }
+
+        async function loadMyClasses() {
+            const grid = document.getElementById('classes-grid');
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #888;">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + 'classes.php?action=my_classes');
+                const data = await res.json();
+                
+                if (data.success) {
+                    myClasses = data.classes;
+                    renderClasses(data.classes);
+                }
+            } catch (e) {
+                console.error("Load classes failed", e);
+                grid.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderClasses(classes) {
+            const grid = document.getElementById('classes-grid');
+            
+            if (classes.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">🏫</div>
+                        <div class="empty-state-text">还没有加入任何班级</div>
+                        <div class="empty-state-hint">创建班级或用邀请码加入吧</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = classes.map(cls => `
+                <div class="class-card" onclick="openClass(${cls.id})">
+                    <div class="class-cover">
+                        <div class="class-cover-icon">🏫</div>
+                        <div class="class-role-badge ${cls.role}">${getRoleLabel(cls.role)}</div>
+                    </div>
+                    <div class="class-info">
+                        <div class="class-name">${escapeHtml(cls.name)}</div>
+                        <div class="class-desc">${escapeHtml(cls.description || '暂无简介')}</div>
+                        <div class="class-stats">
+                            <span>👥 ${cls.member_count} 人</span>
+                            <span>📅 ${new Date(cls.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            document.getElementById('create-class-modal').classList.add('active');
+            document.getElementById('class-name-input').focus();
+        }
+
+        function closeCreateModal() {
+            document.getElementById('create-class-modal').classList.remove('active');
+            document.getElementById('class-name-input').value = '';
+            document.getElementById('class-desc-input').value = '';
+            document.getElementById('class-private-input').checked = false;
+        }
+
+        async function handleCreateClass(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('class-name-input').value.trim();
+            const description = document.getElementById('class-desc-input').value.trim();
+            const isPrivate = document.getElementById('class-private-input').checked ? 1 : 0;
+            
+            if (!name) {
+                alert('请输入班级名称');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create');
+                formData.append('name', name);
+                formData.append('description', description);
+                formData.append('is_private', isPrivate);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`创建成功！\n邀请码：${data.invite_code}\n（记得保存邀请码分享给同学哦）`);
+                    closeCreateModal();
+                    loadMyClasses();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Create class failed", e);
+                alert('创建失败');
+            }
+        }
+
+        async function joinClass() {
+            const inviteCode = document.getElementById('invite-code-input').value.trim();
+            
+            if (!inviteCode) {
+                alert('请输入邀请码');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'join');
+                formData.append('invite_code', inviteCode);
+                
+                const res = await fetch(API_BASE + 'classes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert(`成功加入班级「${data.class_name}」！`);
+                    document.getElementById('invite-code-input').value = '';
+                    loadMyClasses();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Join class failed", e);
+                alert('加入失败');
+            }
+        }
+
+        function openClass(classId) {
+            window.location.href = `class_space.html?id=${classId}`;
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('create-class-modal');
+            if (event.target == modal) {
+                closeCreateModal();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -52,6 +52,7 @@ if ($action == 'register') {
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
+            unset($user['password']);
             echo json_encode(["success" => true, "message" => "登录成功", "user" => $user]);
         } else {
             echo json_encode(["success" => false, "message" => "密码错误"]);

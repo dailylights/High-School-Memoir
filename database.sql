@@ -161,3 +161,44 @@ CREATE TABLE IF NOT EXISTS memoir_media (
 ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS media_count INT DEFAULT 0;
 ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS has_video TINYINT(1) DEFAULT 0;
 ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS has_audio TINYINT(1) DEFAULT 0;
+
+-- 班级表
+CREATE TABLE IF NOT EXISTS classes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    avatar VARCHAR(255),
+    cover_image VARCHAR(255),
+    invite_code VARCHAR(20) UNIQUE,
+    created_by INT NOT NULL,
+    is_private TINYINT(1) DEFAULT 0,
+    member_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_invite_code (invite_code),
+    INDEX idx_created_by (created_by)
+);
+
+-- 班级成员表
+CREATE TABLE IF NOT EXISTS class_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('monitor', 'vice_monitor', 'member') DEFAULT 'member',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_member (class_id, user_id),
+    INDEX idx_class_id (class_id),
+    INDEX idx_user_id (user_id)
+);
+
+-- 为memoirs表添加班级关联
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS class_id INT DEFAULT NULL;
+ALTER TABLE memoirs ADD COLUMN is_class_post TINYINT(1) DEFAULT 0;
+ALTER TABLE memoirs ADD INDEX idx_class_id (class_id);
+
+-- 为albums表添加班级关联
+ALTER TABLE albums ADD COLUMN IF NOT EXISTS class_id INT DEFAULT NULL;
+ALTER TABLE albums ADD INDEX idx_class_id (class_id);
