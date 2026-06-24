@@ -340,6 +340,10 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                         <div class="action-btn" onclick="toggleComments(${memoir.id})">
                             <span>💬</span> <span class="count">${memoir.comments_count}</span>
                         </div>
+                        ${currentUser && currentUser.id == memoir.user_id ? `
+                        <div class="action-btn" onclick="event.stopPropagation(); openExportModal('memoir', ${memoir.id})">
+                            <span>📥</span> <span>导出</span>
+                        </div>` : ''}
                     </div>
                     <div class="comments-section" id="comments-${memoir.id}">
                         <div class="comments-list" id="comments-list-${memoir.id}"></div>

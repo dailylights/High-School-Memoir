@@ -446,6 +446,124 @@ if ($action == 'create') {
     } else {
         echo json_encode(["success" => false, "message" => "删除失败或无权限"]);
     }
+} elseif ($action == 'export') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(["success" => false, "message" => "请先登录"]);
+        exit;
+    }
+    
+    $user_id = $_SESSION['user_id'];
+    $export_user_id = intval($_GET['user_id'] ?? 0);
+    $class_id = intval($_GET['class_id'] ?? 0);
+    $memoir_id = intval($_GET['memoir_id'] ?? 0);
+    
+    $where = "WHERE 1=1";
+    $types = "";
+    $params = [];
+    
+    if ($memoir_id > 0) {
+        $where .= " AND m.id = ?";
+        $types .= "i";
+        $params[] = $memoir_id;
+    } elseif ($class_id > 0) {
+        $where .= " AND m.class_id = ? AND m.is_class_post = 1";
+        $types .= "i";
+        $params[] = $class_id;
+    } elseif ($export_user_id > 0) {
+        $where .= " AND m.user_id = ?";
+        $types .= "i";
+        $params[] = $export_user_id;
+    } else {
+        $where .= " AND m.user_id = ?";
+        $types .= "i";
+        $params[] = $user_id;
+    }
+    
+    if ($memoir_id > 0) {
+        $checkStmt = $conn->prepare("SELECT user_id, class_id, is_class_post FROM memoirs WHERE id = ?");
+        $checkStmt->bind_param("i", $memoir_id);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        if ($checkResult->num_rows === 0) {
+            echo json_encode(["success" => false, "message" => "回忆录不存在"]);
+            exit;
+        }
+        $memoirData = $checkResult->fetch_assoc();
+        $canExport = false;
+        if ($memoirData['user_id'] == $user_id) {
+            $canExport = true;
+        }
+        if (!$canExport) {
+            echo json_encode(["success" => false, "message" => "无权限导出"]);
+            exit;
+        }
+    } elseif ($class_id > 0) {
+        $memberCheck = $conn->prepare("SELECT id FROM class_members WHERE class_id = ? AND user_id = ?");
+        $memberCheck->bind_param("ii", $class_id, $user_id);
+        $memberCheck->execute();
+        if ($memberCheck->get_result()->num_rows === 0) {
+            echo json_encode(["success" => false, "message" => "仅班级成员可导出班级回忆录"]);
+            exit;
+        }
+    } elseif ($export_user_id > 0 && $export_user_id != $user_id) {
+        echo json_encode(["success" => false, "message" => "只能导出自己的回忆录"]);
+        exit;
+    }
+    
+    $sql = "SELECT m.*, u.name as author_name, u.class as author_class, u.avatar as author_avatar, t.name as topic_name
+            FROM memoirs m 
+            JOIN users u ON m.user_id = u.id 
+            LEFT JOIN topics t ON m.topic_id = t.id
+            $where
+            ORDER BY m.created_at DESC";
+    
+    $stmt = $conn->prepare($sql);
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $memoirs = [];
+    while ($row = $result->fetch_assoc()) {
+        $row['images'] = json_decode($row['images']) ?? [];
+        $media = getMemoirMedia($conn, $row['id']);
+        $row['media'] = $media;
+        
+        $commentStmt = $conn->prepare("SELECT c.*, u.name as author_name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.memoir_id = ? ORDER BY c.created_at ASC");
+        $commentStmt->bind_param("i", $row['id']);
+        $commentStmt->execute();
+        $comments = [];
+        $commentResult = $commentStmt->get_result();
+        while ($c = $commentResult->fetch_assoc()) {
+            $comments[] = $c;
+        }
+        $row['comments'] = $comments;
+        
+        $likeStmt = $conn->prepare("SELECT COUNT(*) as count FROM likes WHERE memoir_id = ?");
+        $likeStmt->bind_param("i", $row['id']);
+        $likeStmt->execute();
+        $row['likes_count'] = $likeStmt->get_result()->fetch_assoc()['count'];
+        
+        $memoirs[] = $row;
+    }
+    
+    $userInfo = null;
+    if ($export_user_id > 0 || ($memoir_id == 0 && $class_id == 0)) {
+        $targetUserId = $export_user_id > 0 ? $export_user_id : $user_id;
+        $userStmt = $conn->prepare("SELECT id, name, username, class, avatar, created_at FROM users WHERE id = ?");
+        $userStmt->bind_param("i", $targetUserId);
+        $userStmt->execute();
+        $userInfo = $userStmt->get_result()->fetch_assoc();
+    }
+    
+    echo json_encode([
+        "success" => true,
+        "memoirs" => $memoirs,
+        "user" => $userInfo,
+        "total" => count($memoirs)
+    ]);
+
 } elseif ($action == 'get_detail') {
     $memoir_id = intval($_GET['memoir_id'] ?? 0);
     $current_user_id = $_SESSION['user_id'] ?? 0;

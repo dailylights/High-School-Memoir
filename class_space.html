@@ -729,6 +729,7 @@
     </div>
 
     <script src="js/main.js"></script>
+    <script src="js/export.js"></script>
     <script>
         let classInfo = null;
         let classId = null;
@@ -1198,10 +1199,23 @@
         function loadManageTab() {
             const tab = document.getElementById('tab-manage');
             const isMonitor = classInfo.my_role === 'monitor';
+            const isMember = classInfo.is_member;
             
             tab.innerHTML = `
                 <h3 style="margin-bottom: 20px;">班级管理</h3>
                 <div style="display: grid; gap: 20px; max-width: 600px;">
+                    ${isMember ? `
+                    <div class="stat-card" style="text-align: left; cursor: pointer; border-left: 4px solid #6c5ce7;" onclick="openExportModal('class', ${classId})">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem;">📖</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1rem; color: #6c5ce7;">导出班级回忆录</div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">将班级所有回忆导出为PDF或TXT电子书</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
                     <div class="stat-card" style="text-align: left; cursor: pointer;" onclick="openEditModal()">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <div style="font-size: 2rem;">📝</div>
