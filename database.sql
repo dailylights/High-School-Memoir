@@ -222,3 +222,30 @@ CREATE TABLE IF NOT EXISTS graduations (
 -- 为班级表添加届别关联
 ALTER TABLE classes ADD COLUMN IF NOT EXISTS graduation_id INT DEFAULT NULL;
 ALTER TABLE classes ADD INDEX idx_graduation_id (graduation_id);
+
+-- 用户表添加管理员字段
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin TINYINT(1) DEFAULT 0;
+ALTER TABLE users ADD INDEX idx_is_admin (is_admin);
+
+-- 系统配置表
+CREATE TABLE IF NOT EXISTS site_config (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    config_key VARCHAR(100) NOT NULL UNIQUE,
+    config_value TEXT,
+    config_type ENUM('string', 'number', 'boolean', 'json') DEFAULT 'string',
+    description VARCHAR(255),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_config_key (config_key)
+);
+
+-- 登录尝试表（用于防暴力破解）
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    username VARCHAR(50),
+    success TINYINT(1) DEFAULT 0,
+    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip_time (ip_address, attempt_time),
+    INDEX idx_username_time (username, attempt_time)
+);

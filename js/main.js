@@ -1,6 +1,25 @@
 const API_BASE = 'api/';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const isInstallPage = window.location.pathname.endsWith('install.html');
+    const isAdminPage = window.location.pathname.endsWith('admin.html');
+    
+    if (!isInstallPage && !isAdminPage) {
+        const installed = await checkInstallStatus();
+        if (!installed) {
+            window.location.href = 'install.html';
+            return;
+        }
+    }
+    
+    if (isInstallPage) {
+        const installed = await checkInstallStatus();
+        if (installed) {
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+
     checkSession().then(() => {
         // After session check
         const feed = document.getElementById('memoir-feed');
@@ -63,6 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentUser = null;
 let unreadMessageCount = 0;
 let messagePollingInterval = null;
+
+async function checkInstallStatus() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_public_config');
+        const res = await fetch(API_BASE + 'auth.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success && data.configs) {
+            return data.configs.site_installed === true || data.configs.site_installed === '1';
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
 
 function toggleEditProfile() {
     const card = document.getElementById('edit-profile-card');
@@ -130,12 +164,17 @@ async function checkSession() {
         if (data.success) {
             currentUser = data.user;
             if (navAuth) {
+                let adminLink = '';
+                if (currentUser.is_admin == 1 || currentUser.is_admin === true) {
+                    adminLink = '<a href="admin.html" class="nav-item">⚙️ 管理后台</a>';
+                }
                 navAuth.innerHTML = `
                     <a href="index.html" class="nav-item">首页</a>
                     <a href="graduations.html" class="nav-item">🎓 届别</a>
                     <a href="classes.html" class="nav-item">🏫 班级</a>
                     <a href="messages.html" class="nav-item" id="nav-messages">💬 私信</a>
                     <a href="albums.html" class="nav-item">📷 相册</a>
+                    ${adminLink}
                     <a href="profile.html" class="nav-item">个人中心</a>
                     <span class="nav-item" onclick="logout()">退出</span>
                 `;

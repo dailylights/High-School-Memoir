@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统初始化 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .install-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 650px;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .install-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 40px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .install-header::before {
+            content: '';
+            position: absolute;
+            top: -80%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .install-header::after {
+            content: '';
+            position: absolute;
+            bottom: -60%;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .install-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .install-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .install-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 25px 40px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .step-dot.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+
+        .step-dot.done {
+            background: #27ae60;
+            color: white;
+        }
+
+        .step-line {
+            width: 40px;
+            height: 3px;
+            background: #e9ecef;
+            align-self: center;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .step-line.done {
+            background: #27ae60;
+        }
+
+        .install-body {
+            padding: 35px 40px;
+        }
+
+        .step-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .step-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .step-desc {
+            color: #666;
+            font-size: 0.92rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-hint {
+            font-size: 0.82rem;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .checkbox-group .hint {
+            font-size: 0.82rem;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .install-footer {
+            padding: 20px 40px 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-prev {
+            background: #f1f3f5;
+            color: #555;
+        }
+
+        .btn-prev:hover {
+            background: #e9ecef;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+        }
+
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-content {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .success-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .success-text {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn-goto {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 14px 40px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(39,174,96,0.3);
+        }
+
+        .btn-goto:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39,174,96,0.4);
+        }
+
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.error { background: #e74c3c; }
+        .toast.success { background: #27ae60; }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="install-container">
+        <div class="install-header">
+            <div class="install-icon">🎉</div>
+            <div class="install-title">欢迎使用高中回忆录</div>
+            <div class="install-subtitle">只需几步，完成系统初始化配置</div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-dot active" id="step-dot-1">1</div>
+            <div class="step-line" id="step-line-1"></div>
+            <div class="step-dot" id="step-dot-2">2</div>
+            <div class="step-line" id="step-line-2"></div>
+            <div class="step-dot" id="step-dot-3">3</div>
+        </div>
+
+        <div class="install-body">
+            <div class="step-content active" id="step-1">
+                <div class="step-title">👋 开始之前</div>
+                <div class="step-desc">
+                    欢迎使用高中回忆录系统！在开始使用之前，我们需要配置一些基本信息。
+                    整个过程大约需要 2-3 分钟，请确保您有足够的时间。
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-env" checked>
+                    <label for="check-env">
+                        <div>环境检查</div>
+                        <div class="hint">PHP + MySQL 运行环境</div>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-db" checked>
+                    <label for="check-db">
+                        <div>数据库连接</div>
+                        <div class="hint">已配置数据库连接信息</div>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-terms" required>
+                    <label for="check-terms">
+                        <div>我已阅读并同意使用条款</div>
+                        <div class="hint">请确保您有权限部署本系统</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="step-content" id="step-2">
+                <div class="step-title">🔐 创建管理员账户</div>
+                <div class="step-desc">
+                    请设置管理员账号和密码，这将是您登录后台的唯一凭证，请妥善保管。
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>管理员用户名<span class="required">*</span></label>
+                        <input type="text" id="admin-username" placeholder="admin" maxlength="50">
+                        <div class="form-hint">用户名长度 3-50 个字符</div>
+                    </div>
+                    <div class="form-group">
+                        <label>管理员昵称<span class="required">*</span></label>
+                        <input type="text" id="admin-name" placeholder="超级管理员" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>管理员密码<span class="required">*</span></label>
+                    <input type="password" id="admin-password" placeholder="请输入密码" minlength="6">
+                    <div class="form-hint">密码至少 6 位，建议包含字母和数字</div>
+                </div>
+
+                <div class="form-group">
+                    <label>确认密码<span class="required">*</span></label>
+                    <input type="password" id="admin-password2" placeholder="请再次输入密码">
+                </div>
+            </div>
+
+            <div class="step-content" id="step-3">
+                <div class="step-title">⚙️ 系统基础配置</div>
+                <div class="step-desc">
+                    配置一些基础的系统设置，这些设置后续都可以在管理后台修改。
+                </div>
+
+                <div class="form-group">
+                    <label>站点名称<span class="required">*</span></label>
+                    <input type="text" id="site-name" value="高中回忆录" maxlength="100">
+                    <div class="form-hint">显示在网站标题和各个位置的名称</div>
+                </div>
+
+                <div class="form-group">
+                    <label>站点描述</label>
+                    <textarea id="site-description" placeholder="一句话描述您的站点..." maxlength="500"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>最大登录失败次数</label>
+                        <input type="number" id="login-max-attempts" value="5" min="1" max="50">
+                        <div class="form-hint">超过后锁定IP</div>
+                    </div>
+                    <div class="form-group">
+                        <label>锁定时长（分钟）</label>
+                        <input type="number" id="login-lockout-time" value="15" min="1" max="1440">
+                        <div class="form-hint">锁定后等待时长</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>会话超时（分钟）</label>
+                        <input type="number" id="session-timeout" value="120" min="5" max="10080">
+                        <div class="form-hint">无操作后自动登出</div>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <div class="checkbox-group" style="margin-bottom: 0; padding: 12px 15px;">
+                            <input type="checkbox" id="allow-register" checked>
+                            <label for="allow-register">开放用户注册</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-content" id="step-success">
+                <div class="success-content">
+                    <div class="success-icon">✅</div>
+                    <div class="success-title">安装完成！</div>
+                    <div class="success-text">
+                        系统已成功安装配置！<br>
+                        现在您可以进入管理后台，或者直接访问首页开始使用。
+                    </div>
+                    <button class="btn-goto" onclick="goToAdmin()">
+                        进入管理后台
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="install-footer" id="install-footer">
+            <button class="btn btn-prev" id="btn-prev" onclick="prevStep()" style="visibility: hidden;">
+                ← 上一步
+            </button>
+            <button class="btn btn-next" id="btn-next" onclick="nextStep()">
+                下一步 →
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        let installing = false;
+
+        async function checkInstalled() {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'get_public_config');
+                const res = await fetch('api/auth.php', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success && data.configs && data.configs.site_installed) {
+                    window.location.href = 'index.html';
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        checkInstalled();
+
+        function showToast(message, type = 'error') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.className = `toast ${type}`;
+            }, 2500);
+        }
+
+        function updateStepUI() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const dot = document.getElementById(`step-dot-${i}`);
+                const line = document.getElementById(`step-line-${i}`);
+                
+                dot.classList.remove('active', 'done');
+                if (i < currentStep) {
+                    dot.classList.add('done');
+                    dot.textContent = '✓';
+                } else if (i === currentStep) {
+                    dot.classList.add('active');
+                    dot.textContent = i;
+                } else {
+                    dot.textContent = i;
+                }
+
+                if (line) {
+                    line.classList.toggle('done', i < currentStep);
+                }
+            }
+
+            for (let i = 1; i <= totalSteps; i++) {
+                document.getElementById(`step-${i}`).classList.toggle('active', i === currentStep);
+            }
+
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            
+            btnPrev.style.visibility = currentStep > 1 ? 'visible' : 'hidden';
+            
+            if (currentStep === totalSteps) {
+                btnNext.textContent = '完成安装 ✓';
+            } else {
+                btnNext.textContent = '下一步 →';
+            }
+        }
+
+        function validateStep1() {
+            if (!document.getElementById('check-terms').checked) {
+                showToast('请先阅读并同意使用条款');
+                return false;
+            }
+            return true;
+        }
+
+        function validateStep2() {
+            const username = document.getElementById('admin-username').value.trim();
+            const name = document.getElementById('admin-name').value.trim();
+            const password = document.getElementById('admin-password').value;
+            const password2 = document.getElementById('admin-password2').value;
+
+            if (!username || username.length < 3) {
+                showToast('用户名至少 3 个字符');
+                return false;
+            }
+            if (!name) {
+                showToast('请输入管理员昵称');
+                return false;
+            }
+            if (!password || password.length < 6) {
+                showToast('密码至少 6 位');
+                return false;
+            }
+            if (password !== password2) {
+                showToast('两次输入的密码不一致');
+                return false;
+            }
+            return true;
+        }
+
+        function validateStep3() {
+            const siteName = document.getElementById('site-name').value.trim();
+            if (!siteName) {
+                showToast('请输入站点名称');
+                return false;
+            }
+            return true;
+        }
+
+        async function nextStep() {
+            if (installing) return;
+
+            if (currentStep === 1) {
+                if (!validateStep1()) return;
+            } else if (currentStep === 2) {
+                if (!validateStep2()) return;
+            } else if (currentStep === totalSteps) {
+                if (!validateStep3()) return;
+                await doInstall();
+                return;
+            }
+
+            currentStep++;
+            updateStepUI();
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+            }
+        }
+
+        async function doInstall() {
+            installing = true;
+            const btnNext = document.getElementById('btn-next');
+            btnNext.disabled = true;
+            btnNext.innerHTML = '<span class="loading-spinner"></span>正在安装...';
+
+            const formData = new FormData();
+            formData.append('action', 'install');
+            formData.append('admin_username', document.getElementById('admin-username').value.trim());
+            formData.append('admin_password', document.getElementById('admin-password').value);
+            formData.append('admin_name', document.getElementById('admin-name').value.trim());
+            formData.append('site_name', document.getElementById('site-name').value.trim());
+            formData.append('site_description', document.getElementById('site-description').value.trim());
+            formData.append('allow_register', document.getElementById('allow-register').checked ? '1' : '0');
+            formData.append('login_max_attempts', document.getElementById('login-max-attempts').value);
+            formData.append('login_lockout_time', document.getElementById('login-lockout-time').value);
+            formData.append('session_timeout', document.getElementById('session-timeout').value);
+
+            try {
+                const res = await fetch('api/admin.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('install-footer').style.display = 'none';
+                    for (let i = 1; i <= totalSteps; i++) {
+                        document.getElementById(`step-${i}`).classList.remove('active');
+                    }
+                    document.getElementById('step-success').classList.add('active');
+                    
+                    const dots = document.querySelectorAll('.step-dot');
+                    dots.forEach((dot, i) => {
+                        if (i < totalSteps) {
+                            dot.classList.add('done');
+                            dot.textContent = '✓';
+                        }
+                    });
+                    const lines = document.querySelectorAll('.step-line');
+                    lines.forEach(line => line.classList.add('done'));
+                } else {
+                    showToast(data.message || '安装失败');
+                    btnNext.disabled = false;
+                    btnNext.textContent = '完成安装 ✓';
+                }
+            } catch (err) {
+                showToast('网络错误，请重试');
+                btnNext.disabled = false;
+                btnNext.textContent = '完成安装 ✓';
+            }
+
+            installing = false;
+        }
+
+        function goToAdmin() {
+            window.location.href = 'admin.html';
+        }
+
+        updateStepUI();
+    </script>
+</body>
+</html>

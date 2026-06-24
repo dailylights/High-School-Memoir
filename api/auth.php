@@ -3,7 +3,33 @@ require 'db.php';
 
 $action = $_POST['action'] ?? '';
 
+function getSiteConfig($key, $default = null) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT config_value, config_type FROM site_config WHERE config_key = ?");
+    if (!$stmt) return $default;
+    $stmt->bind_param("s", $key);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $val = $row['config_value'];
+        switch ($row['config_type']) {
+            case 'number': return intval($val);
+            case 'boolean': return $val == '1';
+            case 'json': return json_decode($val, true);
+            default: return $val;
+        }
+    }
+    return $default;
+}
+
 if ($action == 'register') {
+    $allowRegister = getSiteConfig('allow_register', true);
+    if (!$allowRegister) {
+        echo json_encode(["success" => false, "message" => "当前系统未开放注册"]);
+        exit;
+    }
+
     $name = $_POST['name'] ?? '';
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -52,6 +78,7 @@ if ($action == 'register') {
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
+            $_SESSION['last_activity'] = time();
             unset($user['password']);
             echo json_encode(["success" => true, "message" => "登录成功", "user" => $user]);
         } else {
@@ -64,10 +91,18 @@ if ($action == 'register') {
     session_destroy();
     echo json_encode(["success" => true, "message" => "已退出登录"]);
 } elseif ($action == 'check_session') {
+    $timeout = getSiteConfig('session_timeout', 120) * 60;
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout) {
+        session_unset();
+        session_destroy();
+        echo json_encode(["success" => false, "message" => "会话已过期"]);
+        exit;
+    }
+    $_SESSION['last_activity'] = time();
+
     if (isset($_SESSION['user_id'])) {
-        // Fetch fresh user info
         $user_id = $_SESSION['user_id'];
-        $stmt = $conn->prepare("SELECT id, name, username, class, phone, avatar FROM users WHERE id = ?");
+        $stmt = $conn->prepare("SELECT id, name, username, class, phone, avatar, is_admin FROM users WHERE id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -80,6 +115,20 @@ if ($action == 'register') {
     } else {
         echo json_encode(["success" => false]);
     }
+
+} elseif ($action == 'get_public_config') {
+    $configs = [];
+    $publicKeys = ['site_name', 'site_description', 'allow_register'];
+    foreach ($publicKeys as $key) {
+        $configs[$key] = getSiteConfig($key);
+    }
+    $installed = false;
+    $result = $conn->query("SELECT config_value FROM site_config WHERE config_key = 'site_installed'");
+    if ($result && $result->num_rows > 0) {
+        $installed = $result->fetch_assoc()['config_value'] == '1';
+    }
+    $configs['site_installed'] = $installed;
+    echo json_encode(["success" => true, "configs" => $configs]);
 } elseif ($action == 'recover') {
     $username = $_POST['username'] ?? '';
     $phone = $_POST['phone'] ?? '';
