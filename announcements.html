@@ -52,8 +52,10 @@
                         div.style.marginBottom = '20px';
                         div.style.paddingBottom = '20px';
                         div.style.borderBottom = '1px solid #f0f0f0';
+                        const titleHtml = a.title ? `<div style="font-weight: 600; margin-bottom: 10px; font-size: 1.2rem;">${escapeHtml(a.title)}</div>` : '';
                         div.innerHTML = `
-                            <div style="font-size: 1.1rem; white-space: pre-wrap; margin-bottom: 10px;">${a.content}</div>
+                            ${titleHtml}
+                            <div style="font-size: 1.1rem; white-space: pre-wrap; margin-bottom: 10px;">${escapeHtml(a.content)}</div>
                             <div style="font-size: 0.9rem; color: #888;">发布于 ${new Date(a.created_at).toLocaleString()}</div>
                         `;
                         list.appendChild(div);

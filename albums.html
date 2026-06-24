@@ -1120,7 +1120,7 @@
                 <div class="album-card" onclick="openAlbum(${album.id})">
                     <div class="album-cover">
                         ${album.cover_image 
-                            ? `<img src="${album.cover_image}" alt="${escapeHtml(album.name)}">`
+                            ? `<img src="${escapeHtml(album.cover_image)}" alt="${escapeHtml(album.name)}">`
                             : '<div class="album-cover-placeholder">📷</div>'
                         }
                         <div class="album-photo-count">${album.photo_count} 张</div>
@@ -1234,7 +1234,7 @@
                     grouped[year][month].forEach(photo => {
                         html += `
                             <div class="timeline-photo" onclick="openImageViewer(${photo.index})">
-                                <img src="${photo.image_path}" alt="${escapeHtml(photo.title || '')}">
+                                <img src="${escapeHtml(photo.image_path)}" alt="${escapeHtml(photo.title || '')}">
                                 <div class="timeline-photo-overlay">
                                     <div class="timeline-photo-info">
                                         <div>${escapeHtml(photo.album_name)}</div>
@@ -1284,7 +1284,7 @@
             header.innerHTML = `
                 <div class="album-detail-cover">
                     ${album.cover_image 
-                        ? `<img src="${album.cover_image}" alt="${escapeHtml(album.name)}">`
+                        ? `<img src="${escapeHtml(album.cover_image)}" alt="${escapeHtml(album.name)}">`
                         : '📷'
                     }
                 </div>
@@ -1349,7 +1349,7 @@
             
             grid.innerHTML = photos.map((photo, index) => `
                 <div class="photo-item" onclick="openImageViewer(${index})">
-                    <img src="${photo.image_path}" alt="${escapeHtml(photo.title || '')}">
+                    <img src="${escapeHtml(photo.image_path)}" alt="${escapeHtml(photo.title || '')}">
                     <div class="photo-overlay" onclick="event.stopPropagation()">
                         <button class="photo-like-btn" onclick="togglePhotoLike(this, ${photo.id})">
                             ${photo.is_liked ? '❤️' : '🤍'} ${photo.like_count}
