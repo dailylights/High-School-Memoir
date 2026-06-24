@@ -1193,10 +1193,10 @@ function renderProfileInfo() {
             ${getAvatarHtml(currentUser, '80px', '2rem')}
         </div>
         <div style="text-align: center;">
-            <h3>${currentUser.name}</h3>
-            <p style="color: #666;">@${currentUser.username}</p>
-            <p style="margin-top: 10px;">${currentUser.class}</p>
-            <p>${currentUser.phone}</p>
+            <h3>${escapeHtml(currentUser.name)}</h3>
+            <p style="color: #666;">@${escapeHtml(currentUser.username)}</p>
+            <p style="margin-top: 10px;">${escapeHtml(currentUser.class || '')}</p>
+            <p>${escapeHtml(currentUser.phone || '')}</p>
         </div>
     `;
 }

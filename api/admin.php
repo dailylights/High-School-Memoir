@@ -201,9 +201,8 @@ if ($action == 'check_install') {
         
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => '系统错误，请稍后重试']);
     }
-
 } elseif ($action == 'admin_login') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -298,9 +297,8 @@ if ($action == 'check_install') {
         echo json_encode(['success' => true, 'message' => '配置已更新']);
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['success' => false, 'message' => '更新失败: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => '配置更新失败，请稍后重试']);
     }
-
 } elseif ($action == 'change_admin_password') {
     if (!isAdmin()) {
         echo json_encode(['success' => false, 'message' => '需要管理员权限']);
