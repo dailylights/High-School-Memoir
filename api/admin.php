@@ -490,7 +490,7 @@ if ($action == 'check_install') {
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'message' => '用户已删除']);
     } else {
-        echo json_encode(['success' => false, 'message' => '删除失败: ' . $conn->error]);
+        echo json_encode(['success' => false, 'message' => '删除失败']);
     }
 
 } elseif ($action == 'toggle_admin') {

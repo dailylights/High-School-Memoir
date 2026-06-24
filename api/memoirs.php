@@ -358,7 +358,7 @@ if ($action == 'create') {
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        echo json_encode(["success" => false, "message" => "SQL准备失败: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "查询准备失败"]);
         exit;
     }
     $stmt->bind_param($final_types, ...$final_params);

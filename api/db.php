@@ -26,11 +26,11 @@ $dbname = "high_school_memoir";
 try {
     $conn = new mysqli($servername, $username, $password, $dbname);
 } catch (mysqli_sql_exception $e) {
-    die(json_encode(["success" => false, "message" => "数据库连接失败: " . $e->getMessage()]));
+    die(json_encode(["success" => false, "message" => "数据库连接失败"]));
 }
 
 if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Connection failed: " . $conn->connect_error]));
+    die(json_encode(["success" => false, "message" => "数据库连接失败"]));
 }
 
 $conn->set_charset("utf8mb4");
