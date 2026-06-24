@@ -424,11 +424,25 @@ if ($action == 'create') {
         exit;
     }
     
-    $memoir_id = $_POST['memoir_id'] ?? 0;
+    $memoir_id = intval($_POST['memoir_id'] ?? 0);
     $user_id = $_SESSION['user_id'];
     
-    $memoirStmt = $conn->prepare("SELECT images FROM memoirs WHERE id = ? AND user_id = ?");
-    $memoirStmt->bind_param("ii", $memoir_id, $user_id);
+    $isAdmin = false;
+    $adminCheck = $conn->prepare("SELECT is_admin FROM users WHERE id = ?");
+    $adminCheck->bind_param("i", $user_id);
+    $adminCheck->execute();
+    $adminResult = $adminCheck->get_result();
+    if ($adminResult && $adminResult->num_rows > 0) {
+        $isAdmin = $adminResult->fetch_assoc()['is_admin'] == 1;
+    }
+    
+    if ($isAdmin) {
+        $memoirStmt = $conn->prepare("SELECT images, user_id FROM memoirs WHERE id = ?");
+        $memoirStmt->bind_param("i", $memoir_id);
+    } else {
+        $memoirStmt = $conn->prepare("SELECT images, user_id FROM memoirs WHERE id = ? AND user_id = ?");
+        $memoirStmt->bind_param("ii", $memoir_id, $user_id);
+    }
     $memoirStmt->execute();
     $memoirResult = $memoirStmt->get_result();
     
@@ -447,8 +461,13 @@ if ($action == 'create') {
         }
     }
     
-    $stmt = $conn->prepare("DELETE FROM memoirs WHERE id = ? AND user_id = ?");
-    $stmt->bind_param("ii", $memoir_id, $user_id);
+    if ($isAdmin) {
+        $stmt = $conn->prepare("DELETE FROM memoirs WHERE id = ?");
+        $stmt->bind_param("i", $memoir_id);
+    } else {
+        $stmt = $conn->prepare("DELETE FROM memoirs WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $memoir_id, $user_id);
+    }
     
     if ($stmt->execute() && $stmt->affected_rows > 0) {
         $oldImages = json_decode($memoirRow['images'] ?? '[]', true);

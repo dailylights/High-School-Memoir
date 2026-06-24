@@ -56,6 +56,29 @@ function getClientIp() {
     return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 }
 
+function validatePasswordStrength($password) {
+    if (strlen($password) < 6) {
+        return ['valid' => false, 'message' => '密码长度不能少于6位'];
+    }
+    if (strlen($password) > 50) {
+        return ['valid' => false, 'message' => '密码长度不能超过50位'];
+    }
+    return ['valid' => true];
+}
+
+function validateUsername($username) {
+    if (strlen($username) < 3) {
+        return ['valid' => false, 'message' => '用户名长度不能少于3位'];
+    }
+    if (strlen($username) > 20) {
+        return ['valid' => false, 'message' => '用户名长度不能超过20位'];
+    }
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+        return ['valid' => false, 'message' => '用户名只能包含字母、数字和下划线'];
+    }
+    return ['valid' => true];
+}
+
 if ($action == 'register') {
     $allowRegister = getSiteConfig('allow_register', true);
     if (!$allowRegister) {
@@ -63,14 +86,41 @@ if ($action == 'register') {
         exit;
     }
 
-    $name = $_POST['name'] ?? '';
-    $username = $_POST['username'] ?? '';
+    $name = trim($_POST['name'] ?? '');
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    $class = $_POST['class'] ?? '';
-    $phone = $_POST['phone'] ?? '';
+    $class = trim($_POST['class'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
 
     if (empty($name) || empty($username) || empty($password) || empty($class) || empty($phone)) {
         echo json_encode(["success" => false, "message" => "请填写所有字段"]);
+        exit;
+    }
+    
+    $usernameCheck = validateUsername($username);
+    if (!$usernameCheck['valid']) {
+        echo json_encode(["success" => false, "message" => $usernameCheck['message']]);
+        exit;
+    }
+    
+    $passwordCheck = validatePasswordStrength($password);
+    if (!$passwordCheck['valid']) {
+        echo json_encode(["success" => false, "message" => $passwordCheck['message']]);
+        exit;
+    }
+    
+    if (strlen($name) > 50) {
+        echo json_encode(["success" => false, "message" => "姓名过长"]);
+        exit;
+    }
+    
+    if (strlen($class) > 100) {
+        echo json_encode(["success" => false, "message" => "班级名称过长"]);
+        exit;
+    }
+    
+    if (!preg_match('/^1[3-9]\d{9}$/', $phone)) {
+        echo json_encode(["success" => false, "message" => "请输入有效的手机号"]);
         exit;
     }
 
@@ -113,22 +163,27 @@ if ($action == 'register') {
     $stmt->execute();
     $result = $stmt->get_result();
 
+    $loginSuccess = false;
+    $userData = null;
+    
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['last_activity'] = time();
-            recordLoginAttempt($ip, $username, true);
-            unset($user['password']);
-            echo json_encode(["success" => true, "message" => "登录成功", "user" => $user]);
-        } else {
-            recordLoginAttempt($ip, $username, false);
-            echo json_encode(["success" => false, "message" => "密码错误"]);
+            $loginSuccess = true;
+            $userData = $user;
         }
+    }
+    
+    if ($loginSuccess) {
+        $_SESSION['user_id'] = $userData['id'];
+        $_SESSION['user_name'] = $userData['name'];
+        $_SESSION['last_activity'] = time();
+        recordLoginAttempt($ip, $username, true);
+        unset($userData['password']);
+        echo json_encode(["success" => true, "message" => "登录成功", "user" => $userData]);
     } else {
         recordLoginAttempt($ip, $username, false);
-        echo json_encode(["success" => false, "message" => "用户不存在"]);
+        echo json_encode(["success" => false, "message" => "用户名或密码错误"]);
     }
 } elseif ($action == 'logout') {
     session_destroy();
@@ -173,28 +228,45 @@ if ($action == 'register') {
     $configs['site_installed'] = $installed;
     echo json_encode(["success" => true, "configs" => $configs]);
 } elseif ($action == 'recover') {
-    $username = $_POST['username'] ?? '';
-    $phone = $_POST['phone'] ?? '';
+    $username = trim($_POST['username'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
     $new_password = $_POST['new_password'] ?? '';
 
     if (empty($username) || empty($phone) || empty($new_password)) {
         echo json_encode(["success" => false, "message" => "请填写完整信息"]);
         exit;
     }
+    
+    $passwordCheck = validatePasswordStrength($new_password);
+    if (!$passwordCheck['valid']) {
+        echo json_encode(["success" => false, "message" => $passwordCheck['message']]);
+        exit;
+    }
+
+    $ip = getClientIp();
+    if (checkLoginAttempts($ip, $username)) {
+        $lockoutTime = getSiteConfig('login_lockout_time', 15);
+        echo json_encode(["success" => false, "message" => "尝试次数过多，请{$lockoutTime}分钟后再试"]);
+        exit;
+    }
 
     $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND phone = ?");
     $stmt->bind_param("ss", $username, $phone);
     $stmt->execute();
-    if ($stmt->get_result()->num_rows > 0) {
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
         $hashed = password_hash($new_password, PASSWORD_DEFAULT);
         $update = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
         $update->bind_param("ss", $hashed, $username);
         if ($update->execute()) {
+            recordLoginAttempt($ip, $username, true);
             echo json_encode(["success" => true, "message" => "密码重置成功，请登录"]);
         } else {
             echo json_encode(["success" => false, "message" => "重置失败"]);
         }
     } else {
+        recordLoginAttempt($ip, $username, false);
         echo json_encode(["success" => false, "message" => "账号或手机号不匹配"]);
     }
 } elseif ($action == 'update_profile') {
@@ -204,51 +276,78 @@ if ($action == 'register') {
     }
 
     $user_id = $_SESSION['user_id'];
-    $name = $_POST['name'] ?? '';
+    $name = trim($_POST['name'] ?? '');
     
-    // Start updating query construction
     $query = "UPDATE users SET ";
     $params = [];
     $types = "";
+    $oldAvatar = null;
+    
+    $stmt = $conn->prepare("SELECT avatar FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $oldUser = $stmt->get_result()->fetch_assoc();
+    if ($oldUser && !empty($oldUser['avatar'])) {
+        $oldAvatar = $oldUser['avatar'];
+    }
     
     if (!empty($name)) {
+        if (strlen($name) > 50) {
+            echo json_encode(["success" => false, "message" => "姓名过长"]);
+            exit;
+        }
         $query .= "name = ?, ";
         $params[] = $name;
         $types .= "s";
     }
     
-    // Handle avatar upload
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $target_dir = "../uploads/avatars/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
+        $file = $_FILES['avatar'];
+        $maxSize = 2 * 1024 * 1024;
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        if ($file['size'] > $maxSize) {
+            echo json_encode(["success" => false, "message" => "头像大小不能超过2MB"]);
+            exit;
         }
         
-        $file_ext = strtolower(pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($fileExt, $allowedExts)) {
+            echo json_encode(["success" => false, "message" => "仅支持 JPG, PNG, GIF, WebP 格式"]);
+            exit;
+        }
         
-        if (in_array($file_ext, $allowed)) {
-            // Use user_id + timestamp to avoid cache issues and collisions
-            $new_filename = "avatar_" . $user_id . "_" . time() . "." . $file_ext;
-            $target_file = $target_dir . $new_filename;
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if (!$imageInfo || !in_array($imageInfo['mime'], $allowedTypes)) {
+            echo json_encode(["success" => false, "message" => "不是有效的图片文件"]);
+            exit;
+        }
+        
+        $target_dir = "../uploads/avatars/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
+        
+        $new_filename = "avatar_" . $user_id . "_" . time() . "_" . bin2hex(random_bytes(4)) . "." . $fileExt;
+        $target_file = $target_dir . $new_filename;
+        
+        if (move_uploaded_file($file['tmp_name'], $target_file)) {
+            @chmod($target_file, 0644);
+            $db_path = "uploads/avatars/" . $new_filename;
+            $query .= "avatar = ?, ";
+            $params[] = $db_path;
+            $types .= "s";
             
-            if (move_uploaded_file($_FILES['avatar']['tmp_name'], $target_file)) {
-                // Save relative path for frontend usage
-                $db_path = "uploads/avatars/" . $new_filename;
-                $query .= "avatar = ?, ";
-                $params[] = $db_path;
-                $types .= "s";
-            } else {
-                echo json_encode(["success" => false, "message" => "头像上传失败"]);
-                exit;
+            if ($oldAvatar && file_exists("../" . $oldAvatar)) {
+                @unlink("../" . $oldAvatar);
             }
         } else {
-            echo json_encode(["success" => false, "message" => "仅支持 JPG, PNG, GIF 格式"]);
+            echo json_encode(["success" => false, "message" => "头像上传失败"]);
             exit;
         }
     }
     
-    // Remove trailing comma and space
     $query = rtrim($query, ", ");
     
     if (empty($params)) {
@@ -264,20 +363,70 @@ if ($action == 'register') {
     $stmt->bind_param($types, ...$params);
     
     if ($stmt->execute()) {
-        // Update session name if changed
         if (!empty($name)) {
             $_SESSION['user_name'] = $name;
         }
         
-        // Fetch updated user data to return
-        $stmt = $conn->prepare("SELECT id, name, username, class, phone, avatar FROM users WHERE id = ?");
+        $stmt = $conn->prepare("SELECT id, name, username, class, phone, avatar, is_admin FROM users WHERE id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
         
         echo json_encode(["success" => true, "message" => "个人资料已更新", "user" => $user]);
     } else {
-        echo json_encode(["success" => false, "message" => "更新失败: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "更新失败"]);
+    }
+
+} elseif ($action == 'change_password') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(["success" => false, "message" => "未登录"]);
+        exit;
+    }
+    
+    $user_id = $_SESSION['user_id'];
+    $old_password = $_POST['old_password'] ?? '';
+    $new_password = $_POST['new_password'] ?? '';
+    
+    if (empty($old_password) || empty($new_password)) {
+        echo json_encode(["success" => false, "message" => "请填写完整信息"]);
+        exit;
+    }
+    
+    $passwordCheck = validatePasswordStrength($new_password);
+    if (!$passwordCheck['valid']) {
+        echo json_encode(["success" => false, "message" => $passwordCheck['message']]);
+        exit;
+    }
+    
+    if ($old_password === $new_password) {
+        echo json_encode(["success" => false, "message" => "新密码不能与旧密码相同"]);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        echo json_encode(["success" => false, "message" => "用户不存在"]);
+        exit;
+    }
+    
+    $user = $result->fetch_assoc();
+    if (!password_verify($old_password, $user['password'])) {
+        echo json_encode(["success" => false, "message" => "原密码错误"]);
+        exit;
+    }
+    
+    $hashed = password_hash($new_password, PASSWORD_DEFAULT);
+    $update = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+    $update->bind_param("si", $hashed, $user_id);
+    
+    if ($update->execute()) {
+        echo json_encode(["success" => true, "message" => "密码修改成功"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "密码修改失败"]);
     }
 
 } else {
