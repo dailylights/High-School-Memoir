@@ -29,7 +29,13 @@ header("Referrer-Policy: strict-origin-when-cross-origin");
 
 function generateInstallCSRFToken() {
     if (empty($_SESSION['install_csrf_token'])) {
-        $_SESSION['install_csrf_token'] = bin2hex(random_bytes(32));
+        if (function_exists('random_bytes')) {
+            $_SESSION['install_csrf_token'] = bin2hex(random_bytes(32));
+        } elseif (function_exists('openssl_random_pseudo_bytes')) {
+            $_SESSION['install_csrf_token'] = bin2hex(openssl_random_pseudo_bytes(32));
+        } else {
+            $_SESSION['install_csrf_token'] = md5(uniqid(mt_rand(), true));
+        }
     }
     return $_SESSION['install_csrf_token'];
 }
@@ -39,7 +45,10 @@ function validateInstallCSRFToken() {
     if (empty($token) || empty($_SESSION['install_csrf_token'])) {
         return false;
     }
-    return hash_equals($_SESSION['install_csrf_token'], $token);
+    if (function_exists('hash_equals')) {
+        return hash_equals($_SESSION['install_csrf_token'], $token);
+    }
+    return $_SESSION['install_csrf_token'] === $token;
 }
 
 function installCSRFProtection() {

@@ -54,7 +54,13 @@ $conn->set_charset("utf8mb4");
 
 function generateCSRFToken() {
     if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (function_exists('random_bytes')) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        } elseif (function_exists('openssl_random_pseudo_bytes')) {
+            $_SESSION['csrf_token'] = bin2hex(openssl_random_pseudo_bytes(32));
+        } else {
+            $_SESSION['csrf_token'] = md5(uniqid(mt_rand(), true));
+        }
     }
     return $_SESSION['csrf_token'];
 }
@@ -66,7 +72,10 @@ function validateCSRFToken($token = null) {
     if (empty($_SESSION['csrf_token']) || empty($token)) {
         return false;
     }
-    return hash_equals($_SESSION['csrf_token'], $token);
+    if (function_exists('hash_equals')) {
+        return hash_equals($_SESSION['csrf_token'], $token);
+    }
+    return $_SESSION['csrf_token'] === $token;
 }
 
 function getCSRFToken() {

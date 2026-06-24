@@ -708,7 +708,7 @@
                 resultDiv.style.display = 'block';
                 resultDiv.style.background = '#f8d7da';
                 resultDiv.style.color = '#721c24';
-                resultDiv.textContent = '❌ 网络错误，请重试';
+                resultDiv.textContent = '❌ 网络错误：' + (err.message || err) + '，请重试';
             }
             
             btn.innerHTML = '🔌 测试数据库连接';
