@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><a href="index.html">High School Memoir</a></div>
+        <div class="search-bar" style="max-width: 500px;">
+            <span>🔍</span>
+            <input type="text" id="search-input" placeholder="搜索回忆录内容..." autofocus>
+        </div>
+        <div class="nav-links" id="nav-auth">
+            <a href="index.html" class="nav-item">首页</a>
+            <a href="login.html" class="nav-item">登录</a>
+            <a href="register.html" class="btn btn-primary">注册</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 800px;">
+        <main style="width: 100%;">
+            <h2 style="margin-bottom: 20px;">搜索回忆录</h2>
+            <div id="memoir-feed" data-mode="search">
+                <div style="padding: 40px; text-align: center; color: #888;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
+                    <p>输入关键词搜索回忆录</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">支持搜索回忆录内容、作者、话题</p>
+                </div>
+            </div>
+            
+            <div id="pagination" class="pagination"></div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -277,6 +277,16 @@ async function logout() {
 function handleAuth(form, action) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        if (action === 'register') {
+            const password = form.querySelector('input[name="password"]')?.value;
+            const confirmPassword = form.querySelector('input[name="confirm_password"]')?.value;
+            if (confirmPassword !== undefined && password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+        }
+        
         const formData = new FormData(form);
         formData.append('action', action);
         
