@@ -353,7 +353,9 @@ if ($action == 'create') {
     $sql = "SELECT m.*, u.name as author_name, u.class as author_class, u.avatar as author_avatar, t.name as topic_name,
             (SELECT COUNT(*) FROM likes l WHERE l.memoir_id = m.id) as likes_count,
             (SELECT COUNT(*) FROM comments c WHERE c.memoir_id = m.id) as comments_count,
-            (SELECT COUNT(*) FROM likes l2 WHERE l2.memoir_id = m.id AND l2.user_id = ?) as is_liked
+            (SELECT COUNT(*) FROM likes l2 WHERE l2.memoir_id = m.id AND l2.user_id = ?) as is_liked,
+            (SELECT COUNT(*) FROM favorites f WHERE f.memoir_id = m.id AND f.user_id = ?) as is_favorited,
+            m.favorite_count, m.share_count
             FROM memoirs m 
             JOIN users u ON m.user_id = u.id 
             LEFT JOIN topics t ON m.topic_id = t.id
@@ -361,8 +363,8 @@ if ($action == 'create') {
             ORDER BY m.created_at DESC
             LIMIT ? OFFSET ?";
     
-    $final_params = [$current_user_id];
-    $final_types = "i";
+    $final_params = [$current_user_id, $current_user_id];
+    $final_types = "ii";
     
     if (!empty($params)) {
         $final_params = array_merge($final_params, $params);
@@ -631,14 +633,16 @@ if ($action == 'create') {
     $sql = "SELECT m.*, u.name as author_name, u.class as author_class, u.avatar as author_avatar, t.name as topic_name,
             (SELECT COUNT(*) FROM likes l WHERE l.memoir_id = m.id) as likes_count,
             (SELECT COUNT(*) FROM comments c WHERE c.memoir_id = m.id) as comments_count,
-            (SELECT COUNT(*) FROM likes l2 WHERE l2.memoir_id = m.id AND l2.user_id = ?) as is_liked
+            (SELECT COUNT(*) FROM likes l2 WHERE l2.memoir_id = m.id AND l2.user_id = ?) as is_liked,
+            (SELECT COUNT(*) FROM favorites f WHERE f.memoir_id = m.id AND f.user_id = ?) as is_favorited,
+            m.favorite_count, m.share_count
             FROM memoirs m 
             JOIN users u ON m.user_id = u.id 
             LEFT JOIN topics t ON m.topic_id = t.id
             WHERE m.id = ?";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $current_user_id, $memoir_id);
+    $stmt->bind_param("iii", $current_user_id, $current_user_id, $memoir_id);
     $stmt->execute();
     $result = $stmt->get_result();
     

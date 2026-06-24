@@ -296,3 +296,97 @@ CREATE TABLE IF NOT EXISTS follows (
     INDEX idx_following_id (following_id),
     INDEX idx_is_special (is_special)
 );
+
+-- 收藏表
+CREATE TABLE IF NOT EXISTS favorites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    memoir_id INT NOT NULL,
+    user_id INT NOT NULL,
+    folder_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_favorite (memoir_id, user_id),
+    FOREIGN KEY (memoir_id) REFERENCES memoirs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_memoir_id (memoir_id)
+);
+
+-- 转发/分享表
+CREATE TABLE IF NOT EXISTS shares (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    memoir_id INT NOT NULL,
+    user_id INT NOT NULL,
+    share_text TEXT,
+    share_type ENUM('internal', 'wechat', 'qq', 'weibo', 'link', 'other') DEFAULT 'internal',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (memoir_id) REFERENCES memoirs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_memoir_id (memoir_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- 为memoirs添加分享计数字段
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS share_count INT DEFAULT 0;
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS favorite_count INT DEFAULT 0;
+
+-- 标签表（回忆录分类标签）
+CREATE TABLE IF NOT EXISTS tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    use_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name),
+    INDEX idx_use_count (use_count)
+);
+
+-- 回忆录-标签关联表
+CREATE TABLE IF NOT EXISTS memoir_tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    memoir_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_memoir_tag (memoir_id, tag_id),
+    FOREIGN KEY (memoir_id) REFERENCES memoirs(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    INDEX idx_memoir_id (memoir_id),
+    INDEX idx_tag_id (tag_id)
+);
+
+-- 评论表添加父评论ID（支持二级评论/回复）
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INT DEFAULT NULL;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS reply_to_user_id INT DEFAULT NULL;
+ALTER TABLE comments ADD INDEX idx_parent_id (parent_id);
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS like_count INT DEFAULT 0;
+
+-- 评论点赞表
+CREATE TABLE IF NOT EXISTS comment_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_comment_like (comment_id, user_id),
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_comment_id (comment_id),
+    INDEX idx_user_id (user_id)
+);
+
+-- @提及表
+CREATE TABLE IF NOT EXISTS mentions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    memoir_id INT DEFAULT NULL,
+    comment_id INT DEFAULT NULL,
+    mentioned_user_id INT NOT NULL,
+    mentioner_user_id INT NOT NULL,
+    mention_type ENUM('memoir', 'comment') NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (memoir_id) REFERENCES memoirs(id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (mentioned_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (mentioner_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_mentioned_user (mentioned_user_id),
+    INDEX idx_mentioner_user (mentioner_user_id),
+    INDEX idx_is_read (is_read)
+);

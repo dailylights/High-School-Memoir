@@ -119,6 +119,7 @@
     <script src="js/main.js"></script>
     <script src="js/export.js"></script>
     <script src="js/follow.js"></script>
+    <script src="js/interactions.js"></script>
     <script>
         // Feed state
         let currentFeedType = 'all';
@@ -243,6 +244,7 @@
                 : '';
             
             const likeClass = memoir.is_liked > 0 ? 'active' : '';
+            const favoriteClass = memoir.is_favorited > 0 ? 'active' : '';
             
             const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${escapeHtml(memoir.topic_name)}</span>` : '';
             
@@ -258,12 +260,19 @@
                 <div class="post-content">${topicHtml}${escapeHtml(memoir.content)}</div>
                 ${imagesHtml}
                 ${mediaHtml}
+                <div id="tags-${memoir.id}" style="padding: 0 20px;"></div>
                 <div class="post-actions">
                     <div class="action-btn ${likeClass}" onclick="toggleLike(this, ${memoir.id})">
                         <span>❤️</span> <span class="count">${memoir.likes_count}</span>
                     </div>
                     <div class="action-btn" onclick="toggleComments(${memoir.id})">
                         <span>💬</span> <span class="count">${memoir.comments_count}</span>
+                    </div>
+                    <div class="action-btn ${favoriteClass}" data-favorite-memoir="${memoir.id}" onclick="toggleFavorite(${memoir.id})">
+                        <span>⭐</span> <span class="count">${memoir.favorite_count || 0}</span>
+                    </div>
+                    <div class="action-btn" data-share-memoir="${memoir.id}" onclick="showShareMenu(${memoir.id}, event)">
+                        <span>🔗</span> <span class="count">${memoir.share_count || 0}</span>
                     </div>
                     ${currentUser && currentUser.id == memoir.user_id ? `
                     <div class="action-btn" onclick="event.stopPropagation(); openExportModal('memoir', ${memoir.id})">
@@ -273,12 +282,31 @@
                 <div class="comments-section" id="comments-${memoir.id}">
                     <div class="comments-list" id="comments-list-${memoir.id}"></div>
                     <div class="comment-form" style="margin-top: 10px; display: flex; gap: 10px;">
-                        <input type="text" id="comment-input-${memoir.id}" placeholder="写下你的评论..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" id="comment-input-${memoir.id}" placeholder="写下你的评论... 输入@可提及好友" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onfocus="setupMentionAutocomplete(this)">
                         <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.8rem;" onclick="addComment(${memoir.id})">发送</button>
                     </div>
                 </div>
             `;
+            
+            // Load tags asynchronously
+            loadMemoirTags(memoir.id);
+            
             return card;
+        }
+        
+        // Load tags for a memoir
+        async function loadMemoirTags(memoirId) {
+            const tagsContainer = document.getElementById(`tags-${memoirId}`);
+            if (!tagsContainer) return;
+            
+            try {
+                const tags = await getMemoirTags(memoirId);
+                if (tags.length > 0) {
+                    tagsContainer.innerHTML = renderTagsHtml(tags, true);
+                }
+            } catch (e) {
+                console.error('Load tags failed', e);
+            }
         }
     </script>
 </body>

@@ -859,15 +859,45 @@ async function loadComments(memoirId) {
             const div = document.createElement('div');
             div.className = 'comment';
             let imgHtml = c.image ? `<br><img src="${escapeHtml(c.image)}" style="max-width: 100px; max-height: 100px; margin-top: 5px; border-radius: 4px;">` : '';
+            
+            const likeClass = c.is_liked ? 'active' : '';
+            
             div.innerHTML = `
                 <div style="margin-right: 10px;">${getAvatarHtml({name: c.author_name, avatar: c.author_avatar}, '30px', '0.8rem')}</div>
-                <div class="comment-content">
-                    <div class="comment-author">${escapeHtml(c.author_name)}</div>
+                <div class="comment-content" style="flex: 1;">
+                    <div class="comment-author">${escapeHtml(c.author_name)} <span style="font-size: 0.75rem; color: #aaa; font-weight: normal; margin-left: 5px;">${timeAgo(c.created_at)}</span></div>
                     <div class="comment-text">${escapeHtml(c.content)}${imgHtml}</div>
+                    <div style="display: flex; gap: 15px; margin-top: 5px; font-size: 0.8rem; color: #888;">
+                        <span data-comment-like="${c.id}" class="comment-like-btn ${likeClass}" 
+                              onclick="toggleCommentLike(${c.id})" 
+                              style="cursor: pointer; display: flex; align-items: center; gap: 3px; transition: color 0.2s;">
+                            👍 <span class="count">${c.like_count || 0}</span>
+                        </span>
+                        <span onclick="startReply(${memoirId}, ${c.id}, ${c.user_id}, '${escapeHtml(c.author_name)}')" style="cursor: pointer;">
+                            💬 回复
+                        </span>
+                        ${c.reply_count > 0 ? `
+                        <span onclick="toggleReplies(${memoirId}, ${c.id})" style="cursor: pointer;">
+                            ${c.reply_count} 条回复 ▼
+                        </span>` : ''}
+                    </div>
+                    <div id="replies-${c.id}" style="margin-top: 10px; margin-left: 20px; display: none;"></div>
+                    <div id="reply-container-${c.id}" style="display: none; gap: 8px; margin-top: 10px; align-items: center;">
+                        <input type="text" placeholder="回复..." 
+                               style="flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 15px; font-size: 0.85rem; outline: none;"
+                               onfocus="setupMentionAutocomplete(this)">
+                        <button class="btn btn-primary" style="padding: 4px 14px; font-size: 0.8rem;" onclick="submitReply(${memoirId}, ${c.id})">发送</button>
+                        <button style="padding: 4px 10px; font-size: 0.8rem; background: none; border: none; color: #888; cursor: pointer;" onclick="cancelReply(${c.id})">取消</button>
+                    </div>
                 </div>
             `;
             list.appendChild(div);
         });
+        
+        // If no comments, show empty state
+        if (data.comments.length === 0) {
+            list.innerHTML = '<div style="text-align: center; padding: 20px; color: #aaa; font-size: 0.9rem;">暂无评论，来发表第一条评论吧</div>';
+        }
     }
 }
 
