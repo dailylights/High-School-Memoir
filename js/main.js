@@ -1,5 +1,12 @@
 const API_BASE = 'api/';
 
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     checkSession().then(() => {
         // After session check
@@ -129,9 +136,14 @@ async function checkSession() {
             if (navAuth) {
                 navAuth.innerHTML = `
                     <a href="index.html" class="nav-item">首页</a>
+                    <a href="messages.html" class="nav-item" style="position: relative;">
+                        💬 私信
+                        <span id="nav-unread-badge" style="display: none; position: absolute; top: -5px; right: -10px; background: #e74c3c; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; min-width: 18px; text-align: center;"></span>
+                    </a>
                     <a href="profile.html" class="nav-item">个人中心</a>
                     <span class="nav-item" onclick="logout()">退出</span>
                 `;
+                startUnreadPolling();
             }
             if (profileSidebar) {
                 profileSidebar.innerHTML = `
@@ -263,7 +275,8 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                 if (memoir.images && memoir.images.length > 0) {
                     imagesHtml = '<div class="post-images">';
                     memoir.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                        const safeImg = escapeHtml(img);
+                        imagesHtml += `<img src="${safeImg}" onclick="window.open('${safeImg}', '_blank')">`;
                     });
                     imagesHtml += '</div>';
                 }
@@ -274,18 +287,18 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                 
                 const likeClass = memoir.is_liked > 0 ? 'active' : '';
                 
-                const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${memoir.topic_name}</span>` : '';
+                const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${escapeHtml(memoir.topic_name)}</span>` : '';
                 
                 card.innerHTML = `
                     <div class="post-header">
                         <div style="margin-right: 10px;">${getAvatarHtml({name: memoir.author_name, avatar: memoir.author_avatar}, '40px')}</div>
                         <div class="post-info">
-                            <h4>${memoir.author_name} <span style="font-weight:normal; font-size: 0.8rem;">(${memoir.author_class})</span></h4>
-                            <span>${new Date(memoir.created_at).toLocaleString()}</span>
+                            <h4>${escapeHtml(memoir.author_name)} <span style="font-weight:normal; font-size: 0.8rem;">(${escapeHtml(memoir.author_class)})</span></h4>
+                            <span>${escapeHtml(new Date(memoir.created_at).toLocaleString())}</span>
                         </div>
                         ${deleteBtn}
                     </div>
-                    <div class="post-content">${topicHtml}${memoir.content}</div>
+                    <div class="post-content">${topicHtml}${escapeHtml(memoir.content)}</div>
                     ${imagesHtml}
                     <div class="post-actions">
                         <div class="action-btn ${likeClass}" onclick="toggleLike(this, ${memoir.id})">
@@ -566,12 +579,12 @@ async function loadComments(memoirId) {
         data.comments.forEach(c => {
             const div = document.createElement('div');
             div.className = 'comment';
-            let imgHtml = c.image ? `<br><img src="${c.image}" style="max-width: 100px; max-height: 100px; margin-top: 5px; border-radius: 4px;">` : '';
+            let imgHtml = c.image ? `<br><img src="${escapeHtml(c.image)}" style="max-width: 100px; max-height: 100px; margin-top: 5px; border-radius: 4px;">` : '';
             div.innerHTML = `
                 <div style="margin-right: 10px;">${getAvatarHtml({name: c.author_name, avatar: c.author_avatar}, '30px', '0.8rem')}</div>
                 <div class="comment-content">
-                    <div class="comment-author">${c.author_name}</div>
-                    <div class="comment-text">${c.content}${imgHtml}</div>
+                    <div class="comment-author">${escapeHtml(c.author_name)}</div>
+                    <div class="comment-text">${escapeHtml(c.content)}${imgHtml}</div>
                 </div>
             `;
             list.appendChild(div);
@@ -637,8 +650,8 @@ async function loadPopular() {
                 const div = document.createElement('div');
                 div.className = 'popular-item';
                 div.innerHTML = `
-                    <div class="popular-title"><a href="#" onclick="alert('请在主列表中搜索查看完整内容')">${m.content}</a></div>
-                    <div class="popular-meta">by ${m.author_name} · ${m.likes_count} likes</div>
+                    <div class="popular-title"><a href="#" onclick="alert('请在主列表中搜索查看完整内容')">${escapeHtml(m.content)}</a></div>
+                    <div class="popular-meta">by ${escapeHtml(m.author_name)} · ${m.likes_count} likes</div>
                 `;
                 list.appendChild(div);
             });
@@ -701,7 +714,7 @@ async function loadTopicRanking() {
                 div.innerHTML = `
                     <div style="font-weight: 500;">
                         <span style="color: ${rankColor}; margin-right: 5px; font-weight: bold;">${index + 1}</span>
-                        #${t.name}
+                        #${escapeHtml(t.name)}
                     </div>
                     <div style="font-size: 0.8rem; color: #888;">${t.usage_count}</div>
                 `;
@@ -736,8 +749,8 @@ async function loadAnnouncements() {
                 div.style.paddingBottom = '10px';
                 div.style.borderBottom = '1px solid #f0f0f0';
                 div.innerHTML = `
-                    <div style="font-size: 0.95rem; white-space: pre-wrap;">${a.content}</div>
-                    <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">${new Date(a.created_at).toLocaleDateString()}</div>
+                    <div style="font-size: 0.95rem; white-space: pre-wrap;">${escapeHtml(a.content)}</div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">${escapeHtml(new Date(a.created_at).toLocaleDateString())}</div>
                 `;
                 list.appendChild(div);
             });
@@ -776,9 +789,9 @@ async function loadNotifications() {
             div.className = 'notification-item';
             const actionText = latestNotification.type === 'like' ? '赞了你的回忆' : '评论了你的回忆';
             div.innerHTML = `
-                <div style="font-size: 0.9rem;"><strong>${latestNotification.actor_name}</strong> ${actionText}</div>
-                <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">"${latestNotification.memoir_preview.substring(0, 20)}..."</div>
-                <div style="font-size: 0.7rem; color: #999; margin-top: 5px;">${new Date(latestNotification.created_at).toLocaleString()}</div>
+                <div style="font-size: 0.9rem;"><strong>${escapeHtml(latestNotification.actor_name)}</strong> ${escapeHtml(actionText)}</div>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">"${escapeHtml(latestNotification.memoir_preview.substring(0, 20))}..."</div>
+                <div style="font-size: 0.7rem; color: #999; margin-top: 5px;">${escapeHtml(new Date(latestNotification.created_at).toLocaleString())}</div>
             `;
             list.appendChild(div);
             
@@ -824,10 +837,11 @@ async function loadNotificationsList(page = 1) {
                 const div = document.createElement('div');
                 div.className = 'notification-list-item';
                 const actionText = notification.type === 'like' ? '赞了你的回忆' : '评论了你的回忆';
+                const preview = notification.memoir_preview.substring(0, 100) + (notification.memoir_preview.length > 100 ? '...' : '');
                 div.innerHTML = `
-                    <div style="font-size: 0.95rem; margin-bottom: 5px;"><strong>${notification.actor_name}</strong> ${actionText}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px; line-height: 1.4; border-left: 3px solid #e9ecef; padding-left: 10px;">"${notification.memoir_preview.substring(0, 100)}${notification.memoir_preview.length > 100 ? '...' : ''}"</div>
-                    <div style="font-size: 0.75rem; color: #999;">${new Date(notification.created_at).toLocaleString()}</div>
+                    <div style="font-size: 0.95rem; margin-bottom: 5px;"><strong>${escapeHtml(notification.actor_name)}</strong> ${escapeHtml(actionText)}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px; line-height: 1.4; border-left: 3px solid #e9ecef; padding-left: 10px;">"${escapeHtml(preview)}"</div>
+                    <div style="font-size: 0.75rem; color: #999;">${escapeHtml(new Date(notification.created_at).toLocaleString())}</div>
                 `;
                 list.appendChild(div);
             });
@@ -905,3 +919,46 @@ function renderProfileInfo() {
         </div>
     `;
 }
+
+let unreadPollingInterval = null;
+
+function startUnreadPolling() {
+    if (unreadPollingInterval) {
+        clearInterval(unreadPollingInterval);
+    }
+    updateUnreadBadge();
+    unreadPollingInterval = setInterval(updateUnreadBadge, 10000);
+}
+
+function stopUnreadPolling() {
+    if (unreadPollingInterval) {
+        clearInterval(unreadPollingInterval);
+        unreadPollingInterval = null;
+    }
+}
+
+async function updateUnreadBadge() {
+    const badge = document.getElementById('nav-unread-badge');
+    if (!badge || !currentUser) return;
+
+    try {
+        const res = await fetch(`${API_BASE}messages.php?action=get_unread_count`);
+        const data = await res.json();
+
+        if (data.success && data.unread_count > 0) {
+            badge.style.display = 'block';
+            badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+            document.title = `(${data.unread_count}) 高中回忆录`;
+        } else {
+            badge.style.display = 'none';
+            badge.textContent = '';
+            document.title = '高中回忆录';
+        }
+    } catch (e) {
+        console.error('Update unread badge failed', e);
+    }
+}
+
+window.addEventListener('beforeunload', () => {
+    stopUnreadPolling();
+});
