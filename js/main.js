@@ -133,6 +133,7 @@ async function checkSession() {
                 navAuth.innerHTML = `
                     <a href="index.html" class="nav-item">首页</a>
                     <a href="messages.html" class="nav-item" id="nav-messages">💬 私信</a>
+                    <a href="albums.html" class="nav-item">📷 相册</a>
                     <a href="profile.html" class="nav-item">个人中心</a>
                     <span class="nav-item" onclick="logout()">退出</span>
                 `;
@@ -149,6 +150,7 @@ async function checkSession() {
                             <p style="text-align: center; color: #666;">${data.user.class}</p>
                             <div style="margin-top: 15px; text-align: center;">
                                 <a href="messages.html" class="btn" style="background: #6c5ce7; color: white; margin-right: 5px;">💬 私信</a>
+                                <a href="albums.html" class="btn" style="background: #00b894; color: white; margin-right: 5px;">📷 相册</a>
                                 <a href="profile.html" class="btn btn-primary" style="font-size: 0.8rem;">管理账号</a>
                             </div>
                         </div>

@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相册 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 相册页面样式 */
+        .albums-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* 页面头部 */
+        .albums-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .albums-header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: white;
+            border-radius: 20px;
+            padding: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .view-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .create-album-btn {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .create-album-btn:hover {
+            background: #5b4cc4;
+            transform: translateY(-2px);
+        }
+
+        /* 相册网格 */
+        .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .album-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .album-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .album-cover {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-cover-placeholder {
+            font-size: 3rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .album-photo-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .album-info {
+            padding: 15px;
+        }
+
+        .album-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .album-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .album-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px 15px;
+        }
+
+        .album-action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .like-btn {
+            background: #f0f0ff;
+            color: var(--primary-color);
+        }
+
+        .like-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 时间轴视图 */
+        .timeline-container {
+            position: relative;
+        }
+
+        .timeline-year {
+            margin-bottom: 30px;
+        }
+
+        .timeline-year-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary-color);
+            display: inline-block;
+        }
+
+        .timeline-month {
+            margin-bottom: 25px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .timeline-month::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+        }
+
+        .timeline-month-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .timeline-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-left: 20px;
+        }
+
+        .timeline-photo {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            aspect-ratio: 1;
+        }
+
+        .timeline-photo:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .timeline-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .timeline-photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            padding: 30px 10px 10px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .timeline-photo:hover .timeline-photo-overlay {
+            opacity: 1;
+        }
+
+        .timeline-photo-info {
+            font-size: 0.8rem;
+        }
+
+        /* 相册详情视图 */
+        .album-detail {
+            display: none;
+        }
+
+        .album-detail.active {
+            display: block;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .album-detail-header {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .album-detail-cover {
+            width: 150px;
+            height: 150px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .album-detail-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-detail-info {
+            flex: 1;
+        }
+
+        .album-detail-info h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .album-detail-info .description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .album-detail-stats {
+            display: flex;
+            gap: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .album-detail-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* 照片网格 */
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            aspect-ratio: 1;
+        }
+
+        .photo-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            padding: 30px 10px 10px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .photo-item:hover .photo-overlay {
+            opacity: 1;
+        }
+
+        .photo-like-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .photo-delete-btn {
+            background: rgba(231, 76, 60, 0.8);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-delete-btn:hover {
+            background: #e74c3c;
+        }
+
+        /* 上传区域 */
+        .upload-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .upload-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #f0f0ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .upload-preview-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .upload-preview-container.active {
+            display: block;
+        }
+
+        .upload-preview-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upload-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .upload-preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .upload-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-preview-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-preview-remove:hover {
+            background: #e74c3c;
+        }
+
+        .upload-progress {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .upload-progress.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .submit-upload-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .submit-upload-btn:hover:not(:disabled) {
+            background: #5b4cc4;
+        }
+
+        .submit-upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 选择相册下拉 */
+        .album-select-group {
+            margin-bottom: 20px;
+        }
+
+        .album-select-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .album-select-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .album-select-group select:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5b4cc4;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-hint {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* 图片查看器 */
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-viewer.active {
+            display: flex;
+        }
+
+        .image-viewer img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .image-viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            color: white;
+            background: rgba(0,0,0,0.3);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-viewer-nav:hover {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .image-viewer-prev {
+            left: 30px;
+        }
+
+        .image-viewer-next {
+            right: 30px;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 30px 0;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .albums-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .album-cover {
+                height: 150px;
+            }
+
+            .photos-grid, .timeline-photos {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .album-detail-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .album-detail-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .albums-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'">High School Memoir</div>
+        <div class="search-bar" onclick="window.location.href='search.html'" style="cursor: pointer;">
+            <span>🔍</span>
+            <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
+        </div>
+        <div class="nav-links" id="nav-auth"></div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="albums-container" id="albums-container">
+        <!-- 页面头部 -->
+        <div class="albums-header">
+            <h1>📷 相册</h1>
+            <div class="header-actions">
+                <div class="view-toggle">
+                    <button class="view-btn active" id="view-albums" onclick="switchView('albums')">相册</button>
+                    <button class="view-btn" id="view-timeline" onclick="switchView('timeline')">时间轴</button>
+                </div>
+                <button class="create-album-btn" onclick="openCreateAlbumModal()">+ 创建相册</button>
+            </div>
+        </div>
+
+        <!-- 相册列表视图 -->
+        <div id="albums-view">
+            <div id="albums-grid" class="albums-grid">
+                <div class="loading">加载中...</div>
+            </div>
+            <div id="albums-pagination" class="pagination"></div>
+        </div>
+
+        <!-- 时间轴视图 -->
+        <div id="timeline-view" style="display: none;">
+            <div id="timeline-container" class="timeline-container">
+                <div class="loading">加载中...</div>
+            </div>
+            <div id="timeline-pagination" class="pagination"></div>
+        </div>
+
+        <!-- 相册详情视图 -->
+        <div id="album-detail-view" class="album-detail">
+            <button class="back-btn" onclick="backToAlbums()">← 返回相册列表</button>
+            
+            <div id="album-detail-header"></div>
+
+            <!-- 上传区域 -->
+            <div class="upload-section" id="upload-section">
+                <h2>📤 上传照片</h2>
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('photo-input').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击选择图片或拖拽到此处</div>
+                    <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式，单张不超过10MB</div>
+                </div>
+                <input type="file" id="photo-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoSelect(event)">
+                
+                <div class="upload-preview-container" id="upload-preview-container">
+                    <div class="upload-preview-title">
+                        <span>已选择 <span id="photo-count">0</span> 张图片</span>
+                        <button class="btn btn-secondary" onclick="clearUpload()" style="padding: 5px 15px; font-size: 0.85rem;">清空</button>
+                    </div>
+                    <div class="upload-preview-grid" id="upload-preview-grid"></div>
+                    <div class="upload-progress" id="upload-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">上传中...</div>
+                    </div>
+                    <button class="submit-upload-btn" id="submit-upload-btn" onclick="submitUpload()" disabled>开始上传</button>
+                </div>
+            </div>
+
+            <!-- 照片网格 -->
+            <h2 style="margin: 30px 0 20px;">📸 照片墙</h2>
+            <div id="photos-grid" class="photos-grid"></div>
+            <div id="photos-pagination" class="pagination"></div>
+        </div>
+    </div>
+
+    <!-- 创建相册模态框 -->
+    <div class="modal-overlay" id="create-album-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>创建相册</h2>
+                <button class="modal-close" onclick="closeCreateAlbumModal()">&times;</button>
+            </div>
+            <form onsubmit="handleCreateAlbum(event)">
+                <div class="form-group">
+                    <label>相册名称 *</label>
+                    <input type="text" id="album-name-input" required maxlength="200" placeholder="给相册起个名字">
+                </div>
+                <div class="form-group">
+                    <label>相册描述</label>
+                    <textarea id="album-desc-input" placeholder="介绍一下这个相册..." maxlength="1000"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateAlbumModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 图片查看器 -->
+    <div class="image-viewer" id="image-viewer">
+        <button class="image-viewer-close" onclick="closeImageViewer()">&times;</button>
+        <button class="image-viewer-nav image-viewer-prev" onclick="prevImage()">&#10094;</button>
+        <img id="viewer-image" src="" alt="">
+        <button class="image-viewer-nav image-viewer-next" onclick="nextImage()">&#10095;</button>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        const API_BASE = 'api/';
+        let currentUser = null;
+        let currentView = 'albums';
+        let currentAlbumId = null;
+        let currentAlbum = null;
+        let selectedFiles = [];
+        let currentPhotos = [];
+        let currentViewerIndex = 0;
+        let albumsPage = 1;
+        let timelinePage = 1;
+        let photosPage = 1;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession();
+            if (currentUser) {
+                loadAlbums();
+                setupDragAndDrop();
+            }
+        });
+
+        async function checkSession() {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'check_session');
+                const res = await fetch(API_BASE + 'auth.php', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                const navAuth = document.getElementById('nav-auth');
+                
+                if (data.success) {
+                    currentUser = data.user;
+                    if (navAuth) {
+                        navAuth.innerHTML = `
+                            <a href="index.html" class="nav-item">首页</a>
+                            <a href="messages.html" class="nav-item">💬 私信</a>
+                            <a href="albums.html" class="nav-item" style="color: var(--primary-color); font-weight: bold;">📷 相册</a>
+                            <a href="profile.html" class="nav-item">个人中心</a>
+                            <span class="nav-item" onclick="logout()">退出</span>
+                        `;
+                    }
+                } else {
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error("Session check failed", e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function logout() {
+            const formData = new FormData();
+            formData.append('action', 'logout');
+            await fetch(API_BASE + 'auth.php', { method: 'POST', body: formData });
+            window.location.href = 'login.html';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            document.getElementById('view-albums').classList.toggle('active', view === 'albums');
+            document.getElementById('view-timeline').classList.toggle('active', view === 'timeline');
+            
+            document.getElementById('albums-view').style.display = view === 'albums' ? 'block' : 'none';
+            document.getElementById('timeline-view').style.display = view === 'timeline' ? 'block' : 'none';
+            document.getElementById('album-detail-view').classList.remove('active');
+            
+            if (view === 'timeline' && timelinePage === 1) {
+                loadTimelinePhotos();
+            }
+        }
+
+        async function loadAlbums(page = 1) {
+            albumsPage = page;
+            const grid = document.getElementById('albums-grid');
+            grid.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `albums.php?action=list_albums&page=${page}&limit=12`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    renderAlbums(data.albums);
+                    renderPagination('albums-pagination', data.pagination, loadAlbums);
+                }
+            } catch (e) {
+                console.error("Load albums failed", e);
+                grid.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderAlbums(albums) {
+            const grid = document.getElementById('albums-grid');
+            
+            if (albums.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📷</div>
+                        <div class="empty-state-text">还没有相册</div>
+                        <div class="empty-state-hint">点击上方按钮创建第一个相册吧</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = albums.map(album => `
+                <div class="album-card" onclick="openAlbum(${album.id})">
+                    <div class="album-cover">
+                        ${album.cover_image 
+                            ? `<img src="${album.cover_image}" alt="${escapeHtml(album.name)}">`
+                            : '<div class="album-cover-placeholder">📷</div>'
+                        }
+                        <div class="album-photo-count">${album.photo_count} 张</div>
+                    </div>
+                    <div class="album-info">
+                        <div class="album-title">${escapeHtml(album.name)}</div>
+                        <div class="album-meta">
+                            <div class="album-author">
+                                <span style="font-size: 0.8rem;">${escapeHtml(album.author_name)}</span>
+                            </div>
+                            <span>❤️ ${album.like_count}</span>
+                        </div>
+                    </div>
+                    <div class="album-actions" onclick="event.stopPropagation()">
+                        <button class="album-action-btn like-btn ${album.is_liked ? 'active' : ''}" 
+                                onclick="toggleAlbumLike(this, ${album.id})">
+                            ❤️ ${album.like_count}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPagination(containerId, pagination, loadFunc) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const { page, total_pages } = pagination;
+            
+            if (total_pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            html += `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="${loadFunc.name}(${page - 1})">上一页</button>`;
+            
+            for (let i = 1; i <= total_pages; i++) {
+                if (i === 1 || i === total_pages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="${loadFunc.name}(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += '<span style="padding: 0 5px;">...</span>';
+                }
+            }
+            
+            html += `<button class="page-btn" ${page === total_pages ? 'disabled' : ''} onclick="${loadFunc.name}(${page + 1})">下一页</button>`;
+            
+            container.innerHTML = html;
+        }
+
+        async function loadTimelinePhotos(page = 1) {
+            timelinePage = page;
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `albums.php?action=timeline_photos&page=${page}&limit=30`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentPhotos = data.photos;
+                    renderTimeline(data.photos);
+                    renderPagination('timeline-pagination', data.pagination, loadTimelinePhotos);
+                }
+            } catch (e) {
+                console.error("Load timeline failed", e);
+                container.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderTimeline(photos) {
+            const container = document.getElementById('timeline-container');
+            
+            if (photos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-text">还没有照片</div>
+                        <div class="empty-state-hint">快去上传一些照片吧</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const grouped = {};
+            photos.forEach((photo, index) => {
+                const date = photo.taken_at || photo.created_at.split(' ')[0];
+                const dateObj = new Date(date);
+                const year = dateObj.getFullYear();
+                const month = dateObj.getMonth();
+                
+                if (!grouped[year]) grouped[year] = {};
+                if (!grouped[year][month]) grouped[year][month] = [];
+                
+                grouped[year][month].push({ ...photo, index });
+            });
+            
+            let html = '';
+            const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            
+            const years = Object.keys(grouped).sort().reverse();
+            years.forEach(year => {
+                html += `<div class="timeline-year"><div class="timeline-year-header">${year} 年</div>`;
+                
+                const months = Object.keys(grouped[year]).sort((a, b) => b - a);
+                months.forEach(month => {
+                    html += `<div class="timeline-month"><div class="timeline-month-header">${monthNames[month]}</div>`;
+                    html += '<div class="timeline-photos">';
+                    
+                    grouped[year][month].forEach(photo => {
+                        html += `
+                            <div class="timeline-photo" onclick="openImageViewer(${photo.index})">
+                                <img src="${photo.image_path}" alt="${escapeHtml(photo.title || '')}">
+                                <div class="timeline-photo-overlay">
+                                    <div class="timeline-photo-info">
+                                        <div>${escapeHtml(photo.album_name)}</div>
+                                        <div>❤️ ${photo.like_count}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div></div>';
+                });
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+
+        async function openAlbum(albumId) {
+            currentAlbumId = albumId;
+            
+            try {
+                const res = await fetch(API_BASE + `albums.php?action=album_detail&album_id=${albumId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentAlbum = data.album;
+                    document.getElementById('albums-view').style.display = 'none';
+                    document.getElementById('timeline-view').style.display = 'none';
+                    document.getElementById('album-detail-view').classList.add('active');
+                    
+                    renderAlbumDetail(data.album);
+                    loadAlbumPhotos(albumId);
+                    loadMyAlbumsForUpload();
+                }
+            } catch (e) {
+                console.error("Load album failed", e);
+                alert('加载相册失败');
+            }
+        }
+
+        function renderAlbumDetail(album) {
+            const header = document.getElementById('album-detail-header');
+            const isOwner = album.user_id == currentUser.id;
+            
+            header.innerHTML = `
+                <div class="album-detail-cover">
+                    ${album.cover_image 
+                        ? `<img src="${album.cover_image}" alt="${escapeHtml(album.name)}">`
+                        : '📷'
+                    }
+                </div>
+                <div class="album-detail-info">
+                    <h1>${escapeHtml(album.name)}</h1>
+                    <div class="description">${escapeHtml(album.description || '暂无描述')}</div>
+                    <div class="album-detail-stats">
+                        <span>📸 ${album.photo_count} 张照片</span>
+                        <span>❤️ ${album.like_count} 个赞</span>
+                        <span>👤 ${escapeHtml(album.author_name)}</span>
+                        <span>📅 ${new Date(album.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="album-detail-actions">
+                    <button class="btn ${album.is_liked ? 'btn-primary' : 'btn-secondary'}" 
+                            onclick="toggleAlbumLikeForDetail(${album.id})">
+                        ❤️ ${album.is_liked ? '已赞' : '点赞'}
+                    </button>
+                    ${isOwner ? `
+                        <button class="btn btn-danger" onclick="deleteCurrentAlbum()">删除相册</button>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('upload-section').style.display = isOwner ? 'block' : 'none';
+        }
+
+        async function loadAlbumPhotos(albumId, page = 1) {
+            photosPage = page;
+            const grid = document.getElementById('photos-grid');
+            grid.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const res = await fetch(API_BASE + `albums.php?action=album_photos&album_id=${albumId}&page=${page}&limit=20`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentPhotos = data.photos;
+                    renderPhotos(data.photos);
+                    renderPagination('photos-pagination', data.pagination, (p) => loadAlbumPhotos(albumId, p));
+                }
+            } catch (e) {
+                console.error("Load photos failed", e);
+                grid.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function renderPhotos(photos) {
+            const grid = document.getElementById('photos-grid');
+            const isOwner = currentAlbum && currentAlbum.user_id == currentUser.id;
+            
+            if (photos.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📷</div>
+                        <div class="empty-state-text">还没有照片</div>
+                        <div class="empty-state-hint">上传一些照片吧</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = photos.map((photo, index) => `
+                <div class="photo-item" onclick="openImageViewer(${index})">
+                    <img src="${photo.image_path}" alt="${escapeHtml(photo.title || '')}">
+                    <div class="photo-overlay" onclick="event.stopPropagation()">
+                        <button class="photo-like-btn" onclick="togglePhotoLike(this, ${photo.id})">
+                            ${photo.is_liked ? '❤️' : '🤍'} ${photo.like_count}
+                        </button>
+                        ${isOwner ? `<button class="photo-delete-btn" onclick="deletePhoto(${photo.id})">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function backToAlbums() {
+            document.getElementById('album-detail-view').classList.remove('active');
+            document.getElementById('albums-view').style.display = 'block';
+            currentAlbumId = null;
+            currentAlbum = null;
+            selectedFiles = [];
+            updateUploadPreview();
+        }
+
+        function openCreateAlbumModal() {
+            document.getElementById('create-album-modal').classList.add('active');
+            document.getElementById('album-name-input').focus();
+        }
+
+        function closeCreateAlbumModal() {
+            document.getElementById('create-album-modal').classList.remove('active');
+            document.getElementById('album-name-input').value = '';
+            document.getElementById('album-desc-input').value = '';
+        }
+
+        async function handleCreateAlbum(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('album-name-input').value.trim();
+            const description = document.getElementById('album-desc-input').value.trim();
+            
+            if (!name) {
+                alert('请输入相册名称');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create_album');
+                formData.append('name', name);
+                formData.append('description', description);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('创建成功');
+                    closeCreateAlbumModal();
+                    loadAlbums();
+                    openAlbum(data.album_id);
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Create album failed", e);
+                alert('创建失败');
+            }
+        }
+
+        async function toggleAlbumLike(btn, albumId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'toggle_album_like');
+                formData.append('album_id', albumId);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (data.liked) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                    btn.innerHTML = `❤️ ${data.like_count}`;
+                }
+            } catch (e) {
+                console.error("Toggle album like failed", e);
+            }
+        }
+
+        async function toggleAlbumLikeForDetail(albumId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'toggle_album_like');
+                formData.append('album_id', albumId);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentAlbum.is_liked = data.liked;
+                    currentAlbum.like_count = data.like_count;
+                    renderAlbumDetail(currentAlbum);
+                }
+            } catch (e) {
+                console.error("Toggle album like failed", e);
+            }
+        }
+
+        async function togglePhotoLike(btn, photoId) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'toggle_photo_like');
+                formData.append('photo_id', photoId);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    btn.innerHTML = `${data.liked ? '❤️' : '🤍'} ${data.like_count}`;
+                }
+            } catch (e) {
+                console.error("Toggle photo like failed", e);
+            }
+        }
+
+        async function deleteCurrentAlbum() {
+            if (!confirm('确定要删除这个相册吗？所有照片都将被删除，无法恢复。')) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete_album');
+                formData.append('album_id', currentAlbumId);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('删除成功');
+                    backToAlbums();
+                    loadAlbums();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Delete album failed", e);
+                alert('删除失败');
+            }
+        }
+
+        async function deletePhoto(photoId) {
+            if (!confirm('确定要删除这张照片吗？')) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete_photo');
+                formData.append('photo_id', photoId);
+                
+                const res = await fetch(API_BASE + 'albums.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    loadAlbumPhotos(currentAlbumId, photosPage);
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Delete photo failed", e);
+                alert('删除失败');
+            }
+        }
+
+        function handlePhotoSelect(event) {
+            const files = Array.from(event.target.files);
+            addFiles(files);
+        }
+
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('upload-area');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                addFiles(files);
+            });
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    if (selectedFiles.length >= 50) {
+                        alert('最多只能上传50张照片');
+                        return;
+                    }
+                    selectedFiles.push(file);
+                }
+            });
+            updateUploadPreview();
+        }
+
+        function updateUploadPreview() {
+            const container = document.getElementById('upload-preview-container');
+            const grid = document.getElementById('upload-preview-grid');
+            const countEl = document.getElementById('photo-count');
+            const submitBtn = document.getElementById('submit-upload-btn');
+            
+            if (selectedFiles.length === 0) {
+                container.classList.remove('active');
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            container.classList.add('active');
+            countEl.textContent = selectedFiles.length;
+            submitBtn.disabled = false;
+            
+            grid.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'upload-preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="">
+                        <button class="upload-preview-remove" onclick="removeSelectedFile(${index})">&times;</button>
+                    `;
+                    grid.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeSelectedFile(index) {
+            selectedFiles.splice(index, 1);
+            updateUploadPreview();
+        }
+
+        function clearUpload() {
+            selectedFiles = [];
+            document.getElementById('photo-input').value = '';
+            updateUploadPreview();
+        }
+
+        async function loadMyAlbumsForUpload() {
+            // 上传时使用当前打开的相册
+        }
+
+        async function submitUpload() {
+            if (selectedFiles.length === 0) return;
+            if (!currentAlbumId) return;
+            
+            const submitBtn = document.getElementById('submit-upload-btn');
+            const progressDiv = document.getElementById('upload-progress');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            submitBtn.disabled = true;
+            progressDiv.classList.add('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = '准备上传...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'upload_photos');
+                formData.append('album_id', currentAlbumId);
+                
+                selectedFiles.forEach(file => {
+                    formData.append('photos[]', file);
+                });
+                
+                let uploaded = 0;
+                const total = selectedFiles.length;
+                
+                progressText.textContent = `上传中 0/${total}...`;
+                
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', API_BASE + 'albums.php');
+                
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressFill.style.width = percent + '%';
+                    }
+                };
+                
+                xhr.onload = function() {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        
+                        if (data.success) {
+                            progressFill.style.width = '100%';
+                            progressText.textContent = `上传成功！成功 ${data.uploaded} 张，失败 ${data.failed} 张`;
+                            
+                            setTimeout(() => {
+                                progressDiv.classList.remove('active');
+                                selectedFiles = [];
+                                document.getElementById('photo-input').value = '';
+                                updateUploadPreview();
+                                loadAlbumPhotos(currentAlbumId);
+                                loadAlbums();
+                                
+                                const res = fetch(API_BASE + `albums.php?action=album_detail&album_id=${currentAlbumId}`);
+                                res.then(r => r.json()).then(d => {
+                                    if (d.success) {
+                                        currentAlbum = d.album;
+                                        renderAlbumDetail(d.album);
+                                    }
+                                });
+                            }, 1500);
+                        } else {
+                            progressText.textContent = `上传失败: ${data.message}`;
+                            submitBtn.disabled = false;
+                        }
+                    } catch (e) {
+                        progressText.textContent = '上传失败';
+                        submitBtn.disabled = false;
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    progressText.textContent = '网络错误';
+                    submitBtn.disabled = false;
+                };
+                
+                xhr.send(formData);
+                
+            } catch (e) {
+                console.error("Upload failed", e);
+                progressText.textContent = '上传失败';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function openImageViewer(index) {
+            currentViewerIndex = index;
+            updateViewerImage();
+            document.getElementById('image-viewer').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageViewer() {
+            document.getElementById('image-viewer').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function updateViewerImage() {
+            const img = document.getElementById('viewer-image');
+            if (currentPhotos[currentViewerIndex]) {
+                img.src = currentPhotos[currentViewerIndex].image_path;
+            }
+        }
+
+        function prevImage() {
+            if (currentViewerIndex > 0) {
+                currentViewerIndex--;
+                updateViewerImage();
+            }
+        }
+
+        function nextImage() {
+            if (currentViewerIndex < currentPhotos.length - 1) {
+                currentViewerIndex++;
+                updateViewerImage();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const viewer = document.getElementById('image-viewer');
+            if (!viewer.classList.contains('active')) return;
+            
+            if (e.key === 'Escape') closeImageViewer();
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'ArrowRight') nextImage();
+        });
+
+        document.getElementById('image-viewer').addEventListener('click', (e) => {
+            if (e.target.id === 'image-viewer') {
+                closeImageViewer();
+            }
+        });
+    </script>
+</body>
+</html>

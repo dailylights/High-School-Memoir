@@ -84,3 +84,57 @@ CREATE TABLE IF NOT EXISTS conversations (
 
 -- 添加conversation_id外键到messages表（在conversations表创建后）
 ALTER TABLE messages ADD FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;
+
+-- 相册表
+CREATE TABLE IF NOT EXISTS albums (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    cover_image VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- 照片表
+CREATE TABLE IF NOT EXISTS photos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    album_id INT NOT NULL,
+    user_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    title VARCHAR(200),
+    description TEXT,
+    taken_at DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_album_id (album_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_taken_at (taken_at),
+    INDEX idx_created_at (created_at)
+);
+
+-- 相册点赞表
+CREATE TABLE IF NOT EXISTS album_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    album_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_album_like (album_id, user_id),
+    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 照片点赞表
+CREATE TABLE IF NOT EXISTS photo_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    photo_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_photo_like (photo_id, user_id),
+    FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
