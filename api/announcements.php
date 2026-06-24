@@ -3,6 +3,8 @@ require 'db.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+csrfProtection();
+
 function getCurrentUserId() {
     return $_SESSION['user_id'] ?? null;
 }

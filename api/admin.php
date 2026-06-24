@@ -3,6 +3,11 @@ require 'db.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+$skipCsrfActions = ['install', 'check_status'];
+if (!in_array($action, $skipCsrfActions)) {
+    csrfProtection();
+}
+
 function checkSessionTimeout() {
     $timeout = getConfig('session_timeout', 120) * 60;
     

@@ -1,7 +1,12 @@
 <?php
 require 'db.php';
 
-$action = $_POST['action'] ?? '';
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+$skipCsrfActions = ['check_installed'];
+if (!in_array($action, $skipCsrfActions)) {
+    csrfProtection();
+}
 
 function getSiteConfig($key, $default = null) {
     global $conn;
@@ -57,11 +62,17 @@ function getClientIp() {
 }
 
 function validatePasswordStrength($password) {
-    if (strlen($password) < 6) {
-        return ['valid' => false, 'message' => '密码长度不能少于6位'];
+    if (strlen($password) < 8) {
+        return ['valid' => false, 'message' => '密码长度不能少于8位'];
     }
     if (strlen($password) > 50) {
         return ['valid' => false, 'message' => '密码长度不能超过50位'];
+    }
+    if (!preg_match('/[A-Za-z]/', $password)) {
+        return ['valid' => false, 'message' => '密码必须包含至少一个字母'];
+    }
+    if (!preg_match('/[0-9]/', $password)) {
+        return ['valid' => false, 'message' => '密码必须包含至少一个数字'];
     }
     return ['valid' => true];
 }

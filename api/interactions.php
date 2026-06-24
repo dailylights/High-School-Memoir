@@ -3,6 +3,8 @@ require 'db.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+csrfProtection();
+
 if (!isset($_SESSION['user_id']) && $action != 'get_comments') {
     echo json_encode(["success" => false, "message" => "请先登录"]);
     exit;

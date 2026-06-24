@@ -3,6 +3,8 @@ require 'db.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+csrfProtection();
+
 function getMediaType($fileType, $fileName) {
     $imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
     $videoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];

@@ -9,8 +9,19 @@ ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
 
 session_start();
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+    'http://' . ($_SERVER['HTTP_HOST'] ?? ''),
+    'https://' . ($_SERVER['HTTP_HOST'] ?? ''),
+];
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Credentials: true");
+    header("Vary: Origin");
+}
+header("Access-Control-Allow-Headers: Content-Type, X-CSRF-Token");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
@@ -54,6 +65,16 @@ function validateCSRFToken($token = null) {
 
 function getCSRFToken() {
     return generateCSRFToken();
+}
+
+function csrfProtection() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!validateCSRFToken()) {
+            echo json_encode(["success" => false, "message" => "请求验证失败，请刷新页面重试"]);
+            exit;
+        }
+    }
+    header('X-CSRF-Token: ' . getCSRFToken());
 }
 
 generateCSRFToken();

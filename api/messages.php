@@ -230,6 +230,8 @@ $action = getRequestParam('action', '');
 
 $userId = getCurrentUserId();
 
+csrfProtection();
+
 if (!$userId) {
     echo json_encode(['success' => false, 'message' => '请先登录']);
     exit;
