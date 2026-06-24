@@ -5,6 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高中回忆录</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dark-mode.css" id="dark-mode-stylesheet">
+    
+    <style>
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .theme-toggle .icon {
+            font-size: 1rem;
+        }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -13,11 +44,17 @@
             <span>🔍</span>
             <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
         </div>
-        <div class="nav-links" id="nav-auth">
-            <!-- Populated by JS -->
-            <a href="index.html" class="nav-item">首页</a>
-            <a href="login.html" class="nav-item">登录</a>
-            <a href="register.html" class="btn btn-primary">注册</a>
+        <div class="nav-right">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle-btn">
+                <span class="icon" id="theme-icon">🌙</span>
+                <span id="theme-text">深色</span>
+            </button>
+            <div class="nav-links" id="nav-auth">
+                <!-- Populated by JS -->
+                <a href="index.html" class="nav-item">首页</a>
+                <a href="login.html" class="nav-item">登录</a>
+                <a href="register.html" class="btn btn-primary">注册</a>
+            </div>
         </div>
     </nav>
 
@@ -196,7 +233,8 @@
             if (memoir.images && memoir.images.length > 0) {
                 imagesHtml = '<div class="post-images">';
                 memoir.images.forEach(img => {
-                    imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                    const safeImg = escapeHtml(img);
+                    imagesHtml += `<img src="${safeImg}" onclick="window.open('${safeImg}', '_blank')">`;
                 });
                 imagesHtml += '</div>';
             }
@@ -204,11 +242,12 @@
             let mediaHtml = '';
             if (memoir.media && memoir.media.length > 0) {
                 memoir.media.forEach(media => {
+                    const safePath = escapeHtml(media.file_path);
                     if (media.media_type === 'video') {
                         mediaHtml += `
                             <div style="margin: 10px 0; border-radius: 8px; overflow: hidden; background: #000;">
                                 <video controls style="width: 100%; max-height: 400px;" preload="metadata">
-                                    <source src="${media.file_path}">
+                                    <source src="${safePath}">
                                     您的浏览器不支持视频播放
                                 </video>
                             </div>
@@ -224,14 +263,14 @@
                                     </div>
                                 </div>
                                 <audio controls style="width: 100%;">
-                                    <source src="${media.file_path}">
+                                    <source src="${safePath}">
                                     您的浏览器不支持音频播放
                                 </audio>
                             </div>
                         `;
                     } else if (media.media_type === 'image') {
                         imagesHtml = imagesHtml || '<div class="post-images">';
-                        imagesHtml += `<img src="${media.file_path}" onclick="window.open('${media.file_path}', '_blank')">`;
+                        imagesHtml += `<img src="${safePath}" onclick="window.open('${safePath}', '_blank')">`;
                     }
                 });
                 if (imagesHtml && !imagesHtml.endsWith('</div>')) {
@@ -308,6 +347,41 @@
                 console.error('Load tags failed', e);
             }
         }
+        
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update button
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (newTheme === 'dark') {
+                icon.textContent = '☀️';
+                text.textContent = '浅色';
+            } else {
+                icon.textContent = '🌙';
+                text.textContent = '深色';
+            }
+        }
+        
+        // Initialize theme from localStorage
+        (function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                const icon = document.getElementById('theme-icon');
+                const text = document.getElementById('theme-text');
+                if (savedTheme === 'dark') {
+                    icon.textContent = '☀️';
+                    text.textContent = '浅色';
+                }
+            }
+        })();
     </script>
 </body>
 </html>

@@ -29,13 +29,19 @@ header("X-XSS-Protection: 1; mode=block");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
 
-$servername = "127.0.0.1";
-$username = "root";
-$password = "xzh060822";
-$dbname = "high_school_memoir";
+$configFile = __DIR__ . '/config.php';
+if (file_exists($configFile)) {
+    require_once $configFile;
+}
+
+$servername = DB_HOST ?? '127.0.0.1';
+$username = DB_USER ?? 'root';
+$password = DB_PASS ?? '';
+$dbname = DB_NAME ?? 'high_school_memoir';
+$port = defined('DB_PORT') ? DB_PORT : 3306;
 
 try {
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new mysqli($servername, $username, $password, $dbname, $port);
 } catch (mysqli_sql_exception $e) {
     die(json_encode(["success" => false, "message" => "数据库连接失败"]));
 }

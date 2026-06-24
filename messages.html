@@ -716,9 +716,9 @@
             let avatar = user.avatar || user.partner_avatar || null;
             
             if (avatar) {
-                return `<img src="${avatar}" style="width: ${size}; height: ${size}; border-radius: 50%; object-fit: cover;">`;
+                return `<img src="${escapeHtml(avatar)}" style="width: ${size}; height: ${size}; border-radius: 50%; object-fit: cover;">`;
             } else {
-                return `<div style="width: ${size}; height: ${size}; border-radius: 50%; background: var(--secondary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${fontSize};">${name[0]}</div>`;
+                return `<div style="width: ${size}; height: ${size}; border-radius: 50%; background: var(--secondary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${fontSize};">${escapeHtml(name[0])}</div>`;
             }
         }
 

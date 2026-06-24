@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草稿箱 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f6fa 0%, #dfe6e9 100%);
+            min-height: 100vh;
+        }
+
+        .drafts-page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        .page-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .draft-count {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .drafts-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .draft-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .draft-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .draft-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .draft-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #636e72;
+        }
+
+        .draft-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .draft-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .draft-actions button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-edit {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #5b4cc4;
+        }
+
+        .btn-delete {
+            background: #fff5f5;
+            color: var(--danger-color);
+            border: 1px solid #fed7d7;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-publish {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-publish:hover {
+            background: #00a187;
+        }
+
+        .draft-content {
+            font-size: 0.95rem;
+            color: #2d3436;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .draft-images {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .draft-images img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .draft-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .draft-topic {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h4 {
+            font-size: 1.2rem;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            color: #a29bfe;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-state .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e9ecef;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 25px;
+        }
+
+        .page-btn {
+            min-width: 40px;
+            height: 40px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #636e72;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-color: transparent;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            background: #f8f9fa;
+            color: #dfe6e9;
+            cursor: not-allowed;
+        }
+
+        .new-draft-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 25px rgba(108, 92, 231, 0.4);
+            transition: transform 0.2s;
+            z-index: 100;
+        }
+
+        .new-draft-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><a href="index.html">High School Memoir</a></div>
+        <div class="nav-links" id="nav-auth">
+            <a href="index.html" class="nav-item">首页</a>
+            <a href="login.html" class="nav-item">登录</a>
+            <a href="register.html" class="btn btn-primary">注册</a>
+        </div>
+    </nav>
+
+    <div class="drafts-page-wrapper">
+        <div class="page-header">
+            <h1>📝 草稿箱</h1>
+            <p>保存您未发布的回忆录</p>
+            <span class="draft-count" id="draft-count">0 篇草稿</span>
+        </div>
+
+        <div id="drafts-container">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: #888;">加载中...</p>
+            </div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <button class="new-draft-btn" onclick="createNewDraft()" title="新建草稿">+</button>
+
+    <script src="js/main.js"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession().then(() => {
+                if (!currentUser) {
+                    alert('请先登录');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                loadDrafts(1);
+            });
+        });
+
+        async function loadDrafts(page = 1) {
+            currentPage = page;
+            const container = document.getElementById('drafts-container');
+            
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 15px; color: #888;">加载中...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`${API_BASE}drafts.php?action=list&page=${page}&limit=10`);
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.drafts.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">📝</div>
+                                <h4>暂无草稿</h4>
+                                <p>开始写回忆录，保存为草稿</p>
+                            </div>
+                        `;
+                        document.getElementById('draft-count').textContent = '0 篇草稿';
+                        return;
+                    }
+
+                    document.getElementById('draft-count').textContent = `${data.pagination.total} 篇草稿`;
+                    renderDrafts(data.drafts);
+                    renderPagination(data.pagination.page, data.pagination.total_pages);
+                } else {
+                    container.innerHTML = `<div class="empty-state"><p>加载失败</p></div>`;
+                }
+            } catch (e) {
+                console.error('Load drafts failed', e);
+                container.innerHTML = `<div class="empty-state"><p>加载失败，请稍后重试</p></div>`;
+            }
+        }
+
+        function renderDrafts(drafts) {
+            const container = document.getElementById('drafts-container');
+            container.innerHTML = '<div class="drafts-grid"></div>';
+            const grid = container.querySelector('.drafts-grid');
+
+            drafts.forEach(draft => {
+                const card = document.createElement('div');
+                card.className = 'draft-card';
+                
+                const imagesHtml = draft.images && draft.images.length > 0
+                    ? `<div class="draft-images">
+                        ${draft.images.map(img => `<img src="${escapeHtml(img)}" onclick="previewImage('${escapeHtml(img)}')">`).join('')}
+                       </div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="draft-header">
+                        <div class="draft-meta">
+                            <span>🕐 ${timeAgo(draft.updated_at)}</span>
+                            ${draft.topic_name ? `<span>📁 ${escapeHtml(draft.topic_name)}</span>` : ''}
+                            ${draft.images && draft.images.length > 0 ? `<span>🖼️ ${draft.images.length}张图片</span>` : ''}
+                        </div>
+                        <div class="draft-actions">
+                            <button class="btn-publish" onclick="publishDraft(${draft.id})">发布</button>
+                            <button class="btn-edit" onclick="editDraft(${draft.id})">编辑</button>
+                            <button class="btn-delete" onclick="deleteDraft(${draft.id})">删除</button>
+                        </div>
+                    </div>
+                    ${draft.topic_name ? `<span class="draft-topic">#${escapeHtml(draft.topic_name)}</span>` : ''}
+                    <div class="draft-content">${draft.content ? escapeHtml(draft.content) : '<em style="color:#aaa;">无文字内容</em>'}</div>
+                    ${imagesHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderPagination(current, total) {
+            const container = document.getElementById('pagination');
+            if (total <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous
+            html += `<button class="page-btn" ${current === 1 ? 'disabled' : ''} onclick="loadDrafts(${current - 1})">‹</button>`;
+            
+            // Pages
+            for (let i = 1; i <= total; i++) {
+                if (i === 1 || i === total || (i >= current - 1 && i <= current + 1)) {
+                    html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadDrafts(${i})">${i}</button>`;
+                } else if (i === current - 2 || i === current + 2) {
+                    html += '<span style="padding: 0 5px;">...</span>';
+                }
+            }
+            
+            // Next
+            html += `<button class="page-btn" ${current === total ? 'disabled' : ''} onclick="loadDrafts(${current + 1})">›</button>`;
+            
+            container.innerHTML = html;
+        }
+
+        function timeAgo(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = (now - date) / 1000;
+            
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+            if (diff < 604800) return Math.floor(diff / 86400) + '天前';
+            
+            return date.toLocaleDateString();
+        }
+
+        function editDraft(draftId) {
+            window.location.href = `write.html?draft_id=${draftId}`;
+        }
+
+        function publishDraft(draftId) {
+            if (!confirm('确定要发布这篇回忆录吗？')) return;
+            
+            fetch(`${API_BASE}drafts.php?action=get&draft_id=${draftId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.message);
+                        return;
+                    }
+                    
+                    const draft = data.draft;
+                    const formData = new FormData();
+                    formData.append('action', 'create');
+                    formData.append('content', draft.content);
+                    if (draft.topic_id) {
+                        formData.append('topic_id', draft.topic_id);
+                    }
+                    
+                    // Add images
+                    if (draft.images && draft.images.length > 0) {
+                        let imagesJson = JSON.stringify(draft.images);
+                        formData.append('images', imagesJson);
+                    }
+                    
+                    return fetch(API_BASE + 'memoirs.php', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRF-Token': getCSRFToken() }
+                    });
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Delete draft
+                        const deleteForm = new FormData();
+                        deleteForm.append('action', 'delete');
+                        deleteForm.append('draft_id', draftId);
+                        return fetch(API_BASE + 'drafts.php', {
+                            method: 'POST',
+                            body: deleteForm,
+                            headers: { 'X-CSRF-Token': getCSRFToken() }
+                        });
+                    } else {
+                        alert(data.message || '发布失败');
+                    }
+                })
+                .then(res => res.json())
+                .then(() => {
+                    alert('发布成功！');
+                    loadDrafts(currentPage);
+                })
+                .catch(e => {
+                    console.error('Publish failed', e);
+                    alert('发布失败');
+                });
+        }
+
+        function deleteDraft(draftId) {
+            if (!confirm('确定要删除这篇草稿吗？此操作不可恢复。')) return;
+            
+            const formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('draft_id', draftId);
+            
+            fetch(API_BASE + 'drafts.php', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRF-Token': getCSRFToken() }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadDrafts(currentPage);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(e => {
+                console.error('Delete failed', e);
+                alert('删除失败');
+            });
+        }
+
+        function createNewDraft() {
+            window.location.href = 'write.html';
+        }
+
+        function previewImage(src) {
+            window.open(src, '_blank');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+/* 深色模式样式 */
+[data-theme="dark"] {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --text-primary: #eaeaea;
+    --text-secondary: #a0a0a0;
+    --border-color: #2d3748;
+    --primary-color: #a29bfe;
+    --secondary-color: #6c5ce7;
+    --success-color: #00b894;
+    --warning-color: #fdcb6e;
+    --danger-color: #e74c3c;
+}
+
+[data-theme="dark"] body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .navbar {
+    background: rgba(15, 52, 96, 0.95);
+    border-bottom: 1px solid #2d3748;
+}
+
+[data-theme="dark"] .navbar .logo a,
+[data-theme="dark"] .nav-links a {
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .sidebar .card,
+[data-theme="dark"] .results-card,
+[data-theme="dark"] .users-card,
+[data-theme="dark"] .draft-card,
+[data-theme="dark"] .filters-panel,
+[data-theme="dark"] .sidebar-card {
+    background: #0f3460;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .card h3,
+[data-theme="dark"] .sidebar-card-title,
+[data-theme="dark"] .results-header h3,
+[data-theme="dark"] .users-header h3,
+[data-theme="dark"] h4 {
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .post-content,
+[data-theme="dark"] .comment-text,
+[data-theme="dark"] .user-name,
+[data-theme="dark"] .album-result-info h4,
+[data-theme="dark"] .result-user-info h4 {
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .post-meta,
+[data-theme="dark"] .comment-author,
+[data-theme="dark"] .user-meta,
+[data-theme="dark"] .result-footer,
+[data-theme="dark"] .album-meta,
+[data-theme="dark"] .user-stats span {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: #1a1a2e;
+    border-color: #2d3748;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+[data-theme="dark"] .btn {
+    background: #2d3748;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+[data-theme="dark"] .page-header {
+    background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+}
+
+[data-theme="dark"] .search-hero {
+    background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+}
+
+[data-theme="dark"] .filter-group select,
+[data-theme="dark"] .filter-group input {
+    background: #1a1a2e;
+    border-color: #2d3748;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .history-item,
+[data-theme="dark"] .popular-item,
+[data-theme="dark"] .user-item {
+    background: #16213e;
+}
+
+[data-theme="dark"] .history-item:hover,
+[data-theme="dark"] .popular-item:hover,
+[data-theme="dark"] .user-item:hover {
+    background: #1a1a2e;
+}
+
+[data-theme="dark"] .follow-btn.following {
+    background: #2d3748;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .follow-btn.not-following {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+[data-theme="dark"] .draft-card {
+    background: #0f3460;
+}
+
+[data-theme="dark"] .pagination .page-btn {
+    background: #0f3460;
+    border-color: #2d3748;
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .pagination .page-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: transparent;
+    color: white;
+}
+
+[data-theme="dark"] .memoir-result-item {
+    border-bottom-color: #2d3748;
+}
+
+[data-theme="dark"] .results-tabs {
+    background: #0f3460;
+}
+
+[data-theme="dark"] .tab-btn {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .page-header::before {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 深色模式切换按钮 */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.theme-toggle .icon {
+    font-size: 1.1rem;
+}
+
+/* 夜间模式适配的其他元素 */
+[data-theme="dark"] .navbar .nav-links a:hover,
+[data-theme="dark"] .nav-item:hover {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .hot-tag,
+[data-theme="dark"] .popular-rank,
+[data-theme="dark"] .result-topic,
+[data-theme="dark"] .draft-topic,
+[data-theme="dark"] .special-badge {
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .loading-state {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .spinner {
+    border-color: #2d3748;
+    border-top-color: var(--primary-color);
+}
+
+/* 评论区深色模式 */
+[data-theme="dark"] .comments-section {
+    background: rgba(15, 52, 96, 0.5);
+}
+
+[data-theme="dark"] .comment-form input {
+    background: #1a1a2e;
+    border-color: #2d3748;
+    color: #eaeaea;
+}
+
+/* 模态框深色模式 */
+[data-theme="dark"] .modal-content {
+    background: #0f3460;
+    color: #eaeaea;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #2d3748;
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: #2d3748;
+}
+
+[data-theme="dark"] .close {
+    color: #a0a0a0;
+}
+
+/* 消息/通知深色模式 */
+[data-theme="dark"] .notification-item {
+    background: #0f3460;
+    border-color: #2d3748;
+}
+
+[data-theme="dark"] .notification-item:hover {
+    background: #16213e;
+}
+
+[data-theme="dark"] .unread-badge {
+    background: var(--primary-color);
+}
+
+/* 图片预览深色模式 */
+[data-theme="dark"] .lightbox {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+/* 滚动条深色模式 */
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #2d3748;
+    border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #3d4758;
+}
+
+/* 图片网格深色模式 */
+[data-theme="dark"] .photo-grid-item {
+    background: #16213e;
+}
+
+/* Toast提示深色模式 */
+[data-theme="dark"] .toast {
+    background: #0f3460;
+    color: #eaeaea;
+}

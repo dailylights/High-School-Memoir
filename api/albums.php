@@ -29,6 +29,15 @@ function uploadPhoto($file, $albumId, $userId) {
         return ['success' => false, 'message' => '不支持的图片扩展名'];
     }
     
+    $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+    if ($finfo) {
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        if (!in_array($mimeType, $allowedTypes)) {
+            return ['success' => false, 'message' => '不支持的图片格式'];
+        }
+    }
+    
     $imageInfo = @getimagesize($file['tmp_name']);
     if (!$imageInfo || !in_array($imageInfo['mime'], $allowedTypes)) {
         return ['success' => false, 'message' => '不是有效的图片文件'];

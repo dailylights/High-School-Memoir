@@ -405,6 +405,8 @@
             <div class="step-dot" id="step-dot-2">2</div>
             <div class="step-line" id="step-line-2"></div>
             <div class="step-dot" id="step-dot-3">3</div>
+            <div class="step-line" id="step-line-3"></div>
+            <div class="step-dot" id="step-dot-4">4</div>
         </div>
 
         <div class="install-body">
@@ -441,6 +443,48 @@
             </div>
 
             <div class="step-content" id="step-2">
+                <div class="step-title">🗄️ 数据库配置</div>
+                <div class="step-desc">
+                    请填写数据库连接信息，系统会自动测试连接并创建数据库（如果不存在）。
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>数据库地址<span class="required">*</span></label>
+                        <input type="text" id="db-host" value="127.0.0.1" placeholder="localhost / 127.0.0.1">
+                        <div class="form-hint">数据库服务器地址</div>
+                    </div>
+                    <div class="form-group">
+                        <label>数据库端口<span class="required">*</span></label>
+                        <input type="number" id="db-port" value="3306" min="1" max="65535">
+                        <div class="form-hint">MySQL默认端口3306</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>数据库用户名<span class="required">*</span></label>
+                        <input type="text" id="db-user" value="root" placeholder="root">
+                    </div>
+                    <div class="form-group">
+                        <label>数据库密码</label>
+                        <input type="password" id="db-pass" placeholder="请输入数据库密码">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>数据库名称<span class="required">*</span></label>
+                    <input type="text" id="db-name" value="high_school_memoir" placeholder="high_school_memoir">
+                    <div class="form-hint">如不存在将自动创建</div>
+                </div>
+
+                <button type="button" class="btn btn-next" style="width: 100%; padding: 12px;" onclick="testDbConnection()">
+                    <span id="test-db-btn">🔌 测试数据库连接</span>
+                </button>
+                <div id="db-test-result" style="margin-top: 12px; padding: 12px; border-radius: 8px; display: none;"></div>
+            </div>
+
+            <div class="step-content" id="step-3">
                 <div class="step-title">🔐 创建管理员账户</div>
                 <div class="step-desc">
                     请设置管理员账号和密码，这将是您登录后台的唯一凭证，请妥善保管。
@@ -470,7 +514,7 @@
                 </div>
             </div>
 
-            <div class="step-content" id="step-3">
+            <div class="step-content" id="step-4">
                 <div class="step-title">⚙️ 系统基础配置</div>
                 <div class="step-desc">
                     配置一些基础的系统设置，这些设置后续都可以在管理后台修改。
@@ -545,17 +589,28 @@
 
     <script>
         let currentStep = 1;
-        const totalSteps = 3;
+        const totalSteps = 4;
         let installing = false;
+        let dbTested = false;
+        let csrfToken = '';
+
+        function updateCSRFToken(res) {
+            const token = res.headers.get('X-CSRF-Token');
+            if (token) {
+                csrfToken = token;
+            }
+        }
 
         async function checkInstalled() {
             try {
                 const formData = new FormData();
-                formData.append('action', 'get_public_config');
-                const res = await fetch('api/auth.php', { method: 'POST', body: formData });
+                formData.append('action', 'check_status');
+                formData.append('csrf_token', csrfToken);
+                const res = await fetch('api/install.php', { method: 'POST', body: formData, credentials: 'same-origin' });
+                updateCSRFToken(res);
                 const data = await res.json();
-                if (data.success && data.configs && data.configs.site_installed) {
-                    window.location.href = 'index.html';
+                if (data.success && data.installed) {
+                    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;background:#f5f7fa;"><div style="text-align:center;background:white;padding:50px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.1);max-width:500px;"><div style="font-size:4rem;margin-bottom:20px;">🔒</div><h2 style="color:#e74c3c;margin-bottom:15px;">系统已安装</h2><p style="color:#666;line-height:1.8;margin-bottom:25px;">如需重新安装，请删除 <code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;color:#e74c3c;">api/install.lock</code> 文件后再访问此页面。</p><button onclick="window.location.href=\'index.html\'" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 30px;border-radius:10px;font-size:0.95rem;cursor:pointer;">返回首页</button></div></div>';
                     return true;
                 }
             } catch (e) {}
@@ -618,7 +673,60 @@
             return true;
         }
 
+        async function testDbConnection() {
+            const btn = document.getElementById('test-db-btn');
+            const resultDiv = document.getElementById('db-test-result');
+            const formData = new FormData();
+            formData.append('action', 'test_db');
+            formData.append('csrf_token', csrfToken);
+            formData.append('db_host', document.getElementById('db-host').value.trim());
+            formData.append('db_port', document.getElementById('db-port').value);
+            formData.append('db_user', document.getElementById('db-user').value.trim());
+            formData.append('db_pass', document.getElementById('db-pass').value);
+            formData.append('db_name', document.getElementById('db-name').value.trim());
+
+            btn.innerHTML = '<span class="loading-spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> 正在测试...';
+            
+            try {
+                const res = await fetch('api/install.php', { method: 'POST', body: formData, credentials: 'same-origin' });
+                updateCSRFToken(res);
+                const data = await res.json();
+                resultDiv.style.display = 'block';
+                if (data.success) {
+                    dbTested = true;
+                    resultDiv.style.background = '#d4edda';
+                    resultDiv.style.color = '#155724';
+                    resultDiv.textContent = '✅ ' + data.message;
+                } else {
+                    dbTested = false;
+                    resultDiv.style.background = '#f8d7da';
+                    resultDiv.style.color = '#721c24';
+                    resultDiv.textContent = '❌ ' + data.message;
+                }
+            } catch (err) {
+                dbTested = false;
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = '#f8d7da';
+                resultDiv.style.color = '#721c24';
+                resultDiv.textContent = '❌ 网络错误，请重试';
+            }
+            
+            btn.innerHTML = '🔌 测试数据库连接';
+        }
+
         function validateStep2() {
+            const host = document.getElementById('db-host').value.trim();
+            const user = document.getElementById('db-user').value.trim();
+            const name = document.getElementById('db-name').value.trim();
+            
+            if (!host) { showToast('请输入数据库地址'); return false; }
+            if (!user) { showToast('请输入数据库用户名'); return false; }
+            if (!name) { showToast('请输入数据库名称'); return false; }
+            if (!dbTested) { showToast('请先测试数据库连接'); return false; }
+            return true;
+        }
+
+        function validateStep3() {
             const username = document.getElementById('admin-username').value.trim();
             const name = document.getElementById('admin-name').value.trim();
             const password = document.getElementById('admin-password').value;
@@ -643,7 +751,7 @@
             return true;
         }
 
-        function validateStep3() {
+        function validateStep4() {
             const siteName = document.getElementById('site-name').value.trim();
             if (!siteName) {
                 showToast('请输入站点名称');
@@ -659,8 +767,10 @@
                 if (!validateStep1()) return;
             } else if (currentStep === 2) {
                 if (!validateStep2()) return;
-            } else if (currentStep === totalSteps) {
+            } else if (currentStep === 3) {
                 if (!validateStep3()) return;
+            } else if (currentStep === totalSteps) {
+                if (!validateStep4()) return;
                 await doInstall();
                 return;
             }
@@ -684,6 +794,11 @@
 
             const formData = new FormData();
             formData.append('action', 'install');
+            formData.append('db_host', document.getElementById('db-host').value.trim());
+            formData.append('db_port', document.getElementById('db-port').value);
+            formData.append('db_user', document.getElementById('db-user').value.trim());
+            formData.append('db_pass', document.getElementById('db-pass').value);
+            formData.append('db_name', document.getElementById('db-name').value.trim());
             formData.append('admin_username', document.getElementById('admin-username').value.trim());
             formData.append('admin_password', document.getElementById('admin-password').value);
             formData.append('admin_name', document.getElementById('admin-name').value.trim());
@@ -693,12 +808,15 @@
             formData.append('login_max_attempts', document.getElementById('login-max-attempts').value);
             formData.append('login_lockout_time', document.getElementById('login-lockout-time').value);
             formData.append('session_timeout', document.getElementById('session-timeout').value);
+            formData.append('csrf_token', csrfToken);
 
             try {
-                const res = await fetch('api/admin.php', {
+                const res = await fetch('api/install.php', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'same-origin'
                 });
+                updateCSRFToken(res);
                 const data = await res.json();
 
                 if (data.success) {
