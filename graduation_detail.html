@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>届别详情 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .grad-detail-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .back-btn:hover {
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+            transform: translateX(-3px);
+        }
+
+        .grad-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe, #fd79a8);
+            border-radius: var(--border-radius);
+            padding: 60px 50px;
+            margin-bottom: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grad-header::before {
+            content: '';
+            position: absolute;
+            top: -80%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .grad-header::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: 5%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .grad-header-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .grad-year-display {
+            font-size: 6rem;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .grad-info {
+            flex: 1;
+        }
+
+        .grad-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .grad-desc {
+            font-size: 1.05rem;
+            opacity: 0.9;
+            line-height: 1.7;
+            margin-bottom: 25px;
+            max-width: 600px;
+        }
+
+        .grad-stats-row {
+            display: flex;
+            gap: 50px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px;
+            padding: 15px 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .stat-box .num {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-box .label {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .grad-actions {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-outline-white {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-outline-white:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .class-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(108,92,231,0.15);
+        }
+
+        .class-card-cover {
+            height: 120px;
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .class-card-cover.c1 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+        .class-card-cover.c2 { background: linear-gradient(135deg, #84fab0, #8fd3f4); }
+        .class-card-cover.c3 { background: linear-gradient(135deg, #fccb90, #d57eeb); }
+        .class-card-cover.c4 { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
+        .class-card-cover.c5 { background: linear-gradient(135deg, #d299c2, #fef9d7); }
+        .class-card-cover.c6 { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+
+        .class-card-body {
+            padding: 20px;
+        }
+
+        .class-card-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .class-card-desc {
+            font-size: 0.88rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.6em;
+        }
+
+        .class-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        .member-count {
+            color: #6c5ce7;
+            font-weight: 500;
+            background: #f0edff;
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .private-badge {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .empty-classes {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .empty-sub {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108,92,231,0.3);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .modal-actions-left {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-start;
+            margin-top: 25px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success { background: #27ae60; }
+        .toast.error { background: #e74c3c; }
+
+        .loading-text {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">High School Memoir</div>
+        <div class="search-bar" onclick="window.location.href='search.html'" style="cursor: pointer;">
+            <span>🔍</span>
+            <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
+        </div>
+        <div class="nav-links" id="nav-auth">
+            <a href="index.html" class="nav-item">首页</a>
+            <a href="graduations.html" class="nav-item active">届别广场</a>
+            <a href="classes.html" class="nav-item">班级广场</a>
+            <a href="login.html" class="nav-item">登录</a>
+            <a href="register.html" class="btn btn-primary">注册</a>
+        </div>
+    </nav>
+
+    <div class="grad-detail-container">
+        <button class="back-btn" onclick="goBack()">
+            ← 返回届别列表
+        </button>
+
+        <div id="grad-content">
+            <div class="loading-text">加载中...</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            <div class="modal-title">编辑届别信息</div>
+            <form id="edit-form" onsubmit="updateGraduation(event)">
+                <div class="form-group">
+                    <label>届别名称 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>届别简介</label>
+                    <textarea name="description"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+            <div class="modal-title">确认删除</div>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 10px;">
+                确定要删除这个届别吗？
+            </p>
+            <p style="color: #999; font-size: 0.9rem; line-height: 1.6;">
+                删除后，该届别下的班级将被解除关联（不会删除班级本身）。此操作不可撤销。
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeDeleteModal()">取消</button>
+                <button type="button" class="btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let gradId = null;
+        let gradData = null;
+        let isCreator = false;
+        const coverColors = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'];
+
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.className = `toast ${type}`;
+            }, 2500);
+        }
+
+        function goBack() {
+            window.location.href = 'graduations.html';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function loadGraduationDetail() {
+            gradId = getQueryParam('id');
+            if (!gradId) {
+                document.getElementById('grad-content').innerHTML = '<div class="loading-text" style="color: #e74c3c;">届别ID无效</div>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`api/graduations.php?action=detail&id=${gradId}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    gradData = data.graduation;
+                    isCreator = currentUser && currentUser.id == gradData.created_by;
+                    renderGraduationDetail();
+                } else {
+                    document.getElementById('grad-content').innerHTML = 
+                        `<div class="loading-text" style="color: #e74c3c;">${escapeHtml(data.message)}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('grad-content').innerHTML = 
+                    '<div class="loading-text" style="color: #e74c3c;">加载失败</div>';
+            }
+        }
+
+        function renderGraduationDetail() {
+            const container = document.getElementById('grad-content');
+            const g = gradData;
+            const classes = g.classes || [];
+
+            let actionsHtml = '';
+            if (isCreator) {
+                actionsHtml = `
+                    <div class="grad-actions">
+                        <button class="btn-outline-white" onclick="openEditModal()">✏️ 编辑</button>
+                        <button class="btn-outline-white" onclick="openDeleteModal()" style="border-color: rgba(255,100,100,0.5); background: rgba(255,80,80,0.15);">🗑️ 删除</button>
+                    </div>
+                `;
+            }
+
+            let classesHtml = '';
+            if (classes.length === 0) {
+                classesHtml = `
+                    <div class="empty-classes">
+                        <div class="empty-icon">🏫</div>
+                        <div class="empty-text">该届别下还没有班级</div>
+                        <div class="empty-sub">去班级广场创建一个班级，并将其加入本届别吧</div>
+                    </div>
+                `;
+            } else {
+                classesHtml = `
+                    <div class="class-grid">
+                        ${classes.map((c, i) => {
+                            const colorClass = coverColors[i % coverColors.length];
+                            return `
+                                <div class="class-card" onclick="goToClass(${c.id})">
+                                    <div class="class-card-cover ${colorClass}">
+                                        🏫
+                                    </div>
+                                    <div class="class-card-body">
+                                        <div class="class-card-name">${escapeHtml(c.name)}</div>
+                                        <div class="class-card-desc">${escapeHtml(c.description || '暂无简介')}</div>
+                                        <div class="class-card-footer">
+                                            <span class="member-count">👥 ${c.member_count || 0} 人</span>
+                                            ${c.is_private ? '<span class="private-badge">私有</span>' : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="grad-header">
+                    <div class="grad-header-content">
+                        <div class="grad-year-display">${g.year}</div>
+                        <div class="grad-info">
+                            <div class="grad-name">${escapeHtml(g.name)}</div>
+                            <div class="grad-desc">${escapeHtml(g.description || '这是一个特别的届别，承载着无数美好的回忆。')}</div>
+                            <div class="grad-stats-row">
+                                <div class="stat-box">
+                                    <div class="num">${classes.length}</div>
+                                    <div class="label">班级数量</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="num">${classes.reduce((sum, c) => sum + (c.member_count || 0), 0)}</div>
+                                    <div class="label">总人数</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${actionsHtml}
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>🏫 该届所有班级</h2>
+                    <span style="color: #888; font-size: 0.95rem;">共 ${classes.length} 个班级</span>
+                </div>
+
+                ${classesHtml}
+            `;
+        }
+
+        function goToClass(classId) {
+            window.location.href = `class_space.html?id=${classId}`;
+        }
+
+        function openEditModal() {
+            if (!gradData) return;
+            const form = document.getElementById('edit-form');
+            form.name.value = gradData.name;
+            form.description.value = gradData.description || '';
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        async function updateGraduation(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            formData.append('action', 'update');
+            formData.append('id', gradId);
+
+            try {
+                const res = await fetch('api/graduations.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('更新成功！');
+                    closeEditModal();
+                    loadGraduationDetail();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        function openDeleteModal() {
+            document.getElementById('delete-modal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.remove('active');
+        }
+
+        async function confirmDelete() {
+            const formData = new FormData();
+            formData.append('action', 'delete');
+            formData.append('id', gradId);
+
+            try {
+                const res = await fetch('api/graduations.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('删除成功！');
+                    closeDeleteModal();
+                    setTimeout(() => {
+                        window.location.href = 'graduations.html';
+                    }, 1000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        document.getElementById('edit-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+        document.getElementById('delete-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        loadGraduationDetail();
+    </script>
+</body>
+</html>

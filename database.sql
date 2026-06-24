@@ -202,3 +202,23 @@ ALTER TABLE memoirs ADD INDEX idx_class_id (class_id);
 -- 为albums表添加班级关联
 ALTER TABLE albums ADD COLUMN IF NOT EXISTS class_id INT DEFAULT NULL;
 ALTER TABLE albums ADD INDEX idx_class_id (class_id);
+
+-- 届别表
+CREATE TABLE IF NOT EXISTS graduations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    year INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    cover_image VARCHAR(255),
+    created_by INT NOT NULL,
+    class_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_year (year),
+    INDEX idx_year (year)
+);
+
+-- 为班级表添加届别关联
+ALTER TABLE classes ADD COLUMN IF NOT EXISTS graduation_id INT DEFAULT NULL;
+ALTER TABLE classes ADD INDEX idx_graduation_id (graduation_id);

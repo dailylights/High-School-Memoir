@@ -132,9 +132,10 @@ async function checkSession() {
             if (navAuth) {
                 navAuth.innerHTML = `
                     <a href="index.html" class="nav-item">首页</a>
+                    <a href="graduations.html" class="nav-item">🎓 届别</a>
+                    <a href="classes.html" class="nav-item">🏫 班级</a>
                     <a href="messages.html" class="nav-item" id="nav-messages">💬 私信</a>
                     <a href="albums.html" class="nav-item">📷 相册</a>
-                    <a href="classes.html" class="nav-item">🏫 班级</a>
                     <a href="profile.html" class="nav-item">个人中心</a>
                     <span class="nav-item" onclick="logout()">退出</span>
                 `;

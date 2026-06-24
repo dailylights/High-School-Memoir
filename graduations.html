@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>届别广场 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .grad-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border-radius: var(--border-radius);
+            padding: 50px 40px;
+            margin-bottom: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            right: -5%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: 10%;
+            width: 250px;
+            height: 250px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .page-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        .header-actions {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            z-index: 2;
+        }
+
+        .btn-create {
+            background: white;
+            color: #6c5ce7;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title h2 {
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .grad-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .grad-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .grad-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(108,92,231,0.2);
+        }
+
+        .grad-card-cover {
+            height: 140px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grad-card-cover.c1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .grad-card-cover.c2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .grad-card-cover.c3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .grad-card-cover.c4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .grad-card-cover.c5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .grad-card-cover.c6 { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+        .grad-card-cover.c7 { background: linear-gradient(135deg, #ff9a9e, #fecfef); }
+        .grad-card-cover.c8 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+
+        .grad-year-badge {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .grad-card-body {
+            padding: 20px;
+        }
+
+        .grad-card-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .grad-card-desc {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.7em;
+        }
+
+        .grad-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .class-count-badge {
+            background: #f0edff;
+            color: #6c5ce7;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-sub {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 30px 0;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+        }
+
+        .pagination button.active {
+            background: #6c5ce7;
+            color: white;
+            border-color: #6c5ce7;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108,92,231,0.3);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success { background: #27ae60; }
+        .toast.error { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">High School Memoir</div>
+        <div class="search-bar" onclick="window.location.href='search.html'" style="cursor: pointer;">
+            <span>🔍</span>
+            <input type="text" placeholder="点击搜索回忆..." readonly style="cursor: pointer;">
+        </div>
+        <div class="nav-links" id="nav-auth">
+            <a href="index.html" class="nav-item">首页</a>
+            <a href="graduations.html" class="nav-item active">届别广场</a>
+            <a href="classes.html" class="nav-item">班级广场</a>
+            <a href="login.html" class="nav-item">登录</a>
+            <a href="register.html" class="btn btn-primary">注册</a>
+        </div>
+    </nav>
+
+    <div class="grad-container">
+        <div class="page-header">
+            <div class="page-header-content">
+                <div class="header-actions">
+                    <button class="btn-create" onclick="openCreateModal()">+ 创建届别</button>
+                </div>
+                <div class="page-title">🎓 届别广场</div>
+                <div class="page-subtitle">按毕业年份划分，每一届都有专属的班级和回忆</div>
+                <div class="page-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="total-graduations">0</div>
+                        <div class="stat-label">届别总数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="total-classes">0</div>
+                        <div class="stat-label">班级总数</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <h2>全部届别</h2>
+        </div>
+
+        <div class="grad-grid" id="grad-grid">
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">加载中...</div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeCreateModal()">&times;</span>
+            <div class="modal-title">创建届别</div>
+            <form id="create-form" onsubmit="createGraduation(event)">
+                <div class="form-group">
+                    <label>毕业年份 *</label>
+                    <input type="number" name="year" placeholder="例如：2024" min="1990" max="2100" required>
+                </div>
+                <div class="form-group">
+                    <label>届别名称</label>
+                    <input type="text" name="name" placeholder="例如：2024届（留空自动生成）">
+                </div>
+                <div class="form-group">
+                    <label>届别简介</label>
+                    <textarea name="description" placeholder="描述一下这一届的特色..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateModal()">取消</button>
+                    <button type="submit" class="btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let coverColors = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'];
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.className = `toast ${type}`;
+            }, 2500);
+        }
+
+        function openCreateModal() {
+            if (!currentUser) {
+                showToast('请先登录', 'error');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                return;
+            }
+            document.getElementById('create-modal').classList.add('active');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('create-modal').classList.remove('active');
+            document.getElementById('create-form').reset();
+        }
+
+        async function createGraduation(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            formData.append('action', 'create');
+
+            try {
+                const res = await fetch('api/graduations.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('创建成功！');
+                    closeCreateModal();
+                    loadGraduations();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function loadGraduations(page = 1) {
+            currentPage = page;
+            
+            try {
+                const res = await fetch(`api/graduations.php?action=list&page=${page}&limit=12`);
+                const data = await res.json();
+
+                if (data.success) {
+                    renderGraduations(data.graduations);
+                    renderPagination(data.pagination);
+                    
+                    let totalClasses = 0;
+                    data.graduations.forEach(g => {
+                        totalClasses += g.class_count || 0;
+                    });
+                    document.getElementById('total-graduations').textContent = data.pagination.total;
+                    document.getElementById('total-classes').textContent = totalClasses;
+                }
+            } catch (err) {
+                console.error('加载失败:', err);
+            }
+        }
+
+        function renderGraduations(graduations) {
+            const grid = document.getElementById('grad-grid');
+            
+            if (graduations.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-state-icon">🎓</div>
+                        <div class="empty-state-text">还没有届别</div>
+                        <div class="empty-state-sub">点击右上角"创建届别"按钮创建第一个届别吧</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = graduations.map((g, index) => {
+                const colorClass = coverColors[index % coverColors.length];
+                return `
+                    <div class="grad-card" onclick="goToGraduation(${g.id})">
+                        <div class="grad-card-cover ${colorClass}">
+                            <div class="grad-year-badge">${g.year}</div>
+                        </div>
+                        <div class="grad-card-body">
+                            <div class="grad-card-name">${escapeHtml(g.name)}</div>
+                            <div class="grad-card-desc">${escapeHtml(g.description || '暂无简介')}</div>
+                            <div class="grad-card-footer">
+                                <span>👤 ${escapeHtml(g.creator_name)}</span>
+                                <span class="class-count-badge">${g.class_count || 0} 个班级</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(pagination) {
+            const paginationEl = document.getElementById('pagination');
+            totalPages = pagination.total_pages;
+            
+            if (totalPages <= 1) {
+                paginationEl.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            html += `<button onclick="loadGraduations(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            if (startPage > 1) {
+                html += `<button onclick="loadGraduations(1)">1</button>`;
+                if (startPage > 2) {
+                    html += `<span style="padding: 8px;">...</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="loadGraduations(${i})">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += `<span style="padding: 8px;">...</span>`;
+                }
+                html += `<button onclick="loadGraduations(${totalPages})">${totalPages}</button>`;
+            }
+            
+            html += `<button onclick="loadGraduations(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+            
+            paginationEl.innerHTML = html;
+        }
+
+        function goToGraduation(id) {
+            window.location.href = `graduation_detail.html?id=${id}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('create-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeCreateModal();
+        });
+
+        loadGraduations();
+    </script>
+</body>
+</html>

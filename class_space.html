@@ -728,6 +728,29 @@
         </div>
     </div>
 
+    <!-- 设置届别模态框 -->
+    <div class="modal-overlay" id="graduation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>设置所属届别</h2>
+                <button class="modal-close" onclick="closeGraduationModal()">&times;</button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">选择届别</label>
+                <select id="graduation-select" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    <option value="0">-- 不设置届别 --</option>
+                </select>
+            </div>
+            <div style="font-size: 0.85rem; color: #888; margin-bottom: 20px; line-height: 1.5;">
+                设置后，班级将在对应届别的页面中展示。仅班长可以修改此设置。
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeGraduationModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveGraduation()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/main.js"></script>
     <script src="js/export.js"></script>
     <script>
@@ -864,6 +887,7 @@
                             <div class="class-meta">
                                 <span>👥 ${classInfo.member_count} 人</span>
                                 <span>📅 创立于 ${new Date(classInfo.created_at).toLocaleDateString()}</span>
+                                ${classInfo.graduation_id ? `<span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px;">🎓 届别班级</span>` : ''}
                                 ${classInfo.is_private ? '<span>🔒 私有班级</span>' : ''}
                                 ${isMember ? `<span>${getRoleLabel(classInfo.my_role)}</span>` : ''}
                             </div>
@@ -1201,6 +1225,8 @@
             const isMonitor = classInfo.my_role === 'monitor';
             const isMember = classInfo.is_member;
             
+            const gradName = classInfo.graduation_id ? '（已设置届别）' : '';
+            
             tab.innerHTML = `
                 <h3 style="margin-bottom: 20px;">班级管理</h3>
                 <div style="display: grid; gap: 20px; max-width: 600px;">
@@ -1211,6 +1237,18 @@
                             <div>
                                 <div style="font-weight: 600; font-size: 1rem; color: #6c5ce7;">导出班级回忆录</div>
                                 <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">将班级所有回忆导出为PDF或TXT电子书</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${isMonitor ? `
+                    <div class="stat-card" style="text-align: left; cursor: pointer; border-left: 4px solid #00b894;" onclick="openGraduationModal()">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem;">🎓</div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 1rem; color: #00b894;">设置所属届别</div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">将班级归类到某一届 ${gradName}</div>
                             </div>
                         </div>
                     </div>
@@ -1463,6 +1501,67 @@
             }).catch(() => {
                 alert('复制失败，请手动复制：' + classInfo.invite_code);
             });
+        }
+
+        async function openGraduationModal() {
+            const modal = document.getElementById('graduation-modal');
+            const select = document.getElementById('graduation-select');
+            
+            try {
+                const res = await fetch(API_BASE + 'graduations.php?action=list&limit=100');
+                const data = await res.json();
+                
+                if (data.success) {
+                    let options = '<option value="0">-- 不设置届别 --</option>';
+                    data.graduations.forEach(g => {
+                        const selected = classInfo.graduation_id == g.id ? 'selected' : '';
+                        options += `<option value="${g.id}" ${selected}>${g.year} - ${escapeHtml(g.name)}</option>`;
+                    });
+                    select.innerHTML = options;
+                }
+            } catch (e) {
+                console.error("Load graduations failed", e);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeGraduationModal() {
+            document.getElementById('graduation-modal').classList.remove('active');
+        }
+
+        async function saveGraduation() {
+            const graduationId = parseInt(document.getElementById('graduation-select').value || 0);
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'set_class_graduation');
+                formData.append('class_id', classId);
+                formData.append('graduation_id', graduationId);
+                
+                const res = await fetch(API_BASE + 'graduations.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('设置成功！');
+                    closeGraduationModal();
+                    loadClassDetail();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error("Set graduation failed", e);
+                alert('设置失败');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
