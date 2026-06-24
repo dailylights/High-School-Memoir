@@ -357,7 +357,8 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                 if (memoir.images && memoir.images.length > 0) {
                     imagesHtml = '<div class="post-images">';
                     memoir.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                        const safeImg = escapeHtml(img);
+                        imagesHtml += `<img src="${safeImg}" onclick="window.open('${safeImg}', '_blank')">`;
                     });
                     imagesHtml += '</div>';
                 }
@@ -365,11 +366,12 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                 let mediaHtml = '';
                 if (memoir.media && memoir.media.length > 0) {
                     memoir.media.forEach(media => {
+                        const safePath = escapeHtml(media.file_path);
                         if (media.media_type === 'video') {
                             mediaHtml += `
                                 <div style="margin: 10px 0; border-radius: 8px; overflow: hidden; background: #000;">
                                     <video controls style="width: 100%; max-height: 400px;" preload="metadata">
-                                        <source src="${media.file_path}">
+                                        <source src="${safePath}">
                                         您的浏览器不支持视频播放
                                     </video>
                                 </div>
@@ -385,14 +387,14 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                                         </div>
                                     </div>
                                     <audio controls style="width: 100%;">
-                                        <source src="${media.file_path}">
+                                        <source src="${safePath}">
                                         您的浏览器不支持音频播放
                                     </audio>
                                 </div>
                             `;
                         } else if (media.media_type === 'image') {
                             imagesHtml = imagesHtml || '<div class="post-images">';
-                            imagesHtml += `<img src="${media.file_path}" onclick="window.open('${media.file_path}', '_blank')">`;
+                            imagesHtml += `<img src="${safePath}" onclick="window.open('${safePath}', '_blank')">`;
                         }
                     });
                     if (imagesHtml && !imagesHtml.endsWith('</div>')) {

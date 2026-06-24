@@ -816,10 +816,10 @@
 
         function getAvatarHtml(user, size = '45px') {
             if (user.avatar) {
-                return `<div class="post-avatar" style="width:${size}; height:${size};"><img src="${user.avatar}"></div>`;
+                return `<div class="post-avatar" style="width:${size}; height:${size};"><img src="${escapeHtml(user.avatar)}"></div>`;
             }
             const name = user.name || user.author_name || '?';
-            return `<div class="post-avatar" style="width:${size}; height:${size}; font-size: 1rem;">${name[0]}</div>`;
+            return `<div class="post-avatar" style="width:${size}; height:${size}; font-size: 1rem;">${escapeHtml(name[0])}</div>`;
         }
 
         async function loadClassDetail() {
@@ -1130,7 +1130,7 @@
                         data.albums.map(album => `
                             <div class="album-card" onclick="window.location.href='albums.html'">
                                 <div class="album-cover">
-                                    ${album.cover_image ? `<img src="${album.cover_image}">` : '📷'}
+                                    ${album.cover_image ? `<img src="${escapeHtml(album.cover_image)}">` : '📷'}
                                 </div>
                                 <div class="album-info">
                                     <div class="album-name">${escapeHtml(album.name)}</div>

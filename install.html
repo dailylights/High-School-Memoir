@@ -592,12 +592,22 @@
         const totalSteps = 4;
         let installing = false;
         let dbTested = false;
+        let csrfToken = '';
+
+        function updateCSRFToken(res) {
+            const token = res.headers.get('X-CSRF-Token');
+            if (token) {
+                csrfToken = token;
+            }
+        }
 
         async function checkInstalled() {
             try {
                 const formData = new FormData();
                 formData.append('action', 'check_status');
-                const res = await fetch('api/install.php', { method: 'POST', body: formData });
+                formData.append('csrf_token', csrfToken);
+                const res = await fetch('api/install.php', { method: 'POST', body: formData, credentials: 'same-origin' });
+                updateCSRFToken(res);
                 const data = await res.json();
                 if (data.success && data.installed) {
                     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;background:#f5f7fa;"><div style="text-align:center;background:white;padding:50px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.1);max-width:500px;"><div style="font-size:4rem;margin-bottom:20px;">🔒</div><h2 style="color:#e74c3c;margin-bottom:15px;">系统已安装</h2><p style="color:#666;line-height:1.8;margin-bottom:25px;">如需重新安装，请删除 <code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;color:#e74c3c;">api/install.lock</code> 文件后再访问此页面。</p><button onclick="window.location.href=\'index.html\'" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 30px;border-radius:10px;font-size:0.95rem;cursor:pointer;">返回首页</button></div></div>';
@@ -668,6 +678,7 @@
             const resultDiv = document.getElementById('db-test-result');
             const formData = new FormData();
             formData.append('action', 'test_db');
+            formData.append('csrf_token', csrfToken);
             formData.append('db_host', document.getElementById('db-host').value.trim());
             formData.append('db_port', document.getElementById('db-port').value);
             formData.append('db_user', document.getElementById('db-user').value.trim());
@@ -677,7 +688,8 @@
             btn.innerHTML = '<span class="loading-spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> 正在测试...';
             
             try {
-                const res = await fetch('api/install.php', { method: 'POST', body: formData });
+                const res = await fetch('api/install.php', { method: 'POST', body: formData, credentials: 'same-origin' });
+                updateCSRFToken(res);
                 const data = await res.json();
                 resultDiv.style.display = 'block';
                 if (data.success) {
@@ -796,12 +808,15 @@
             formData.append('login_max_attempts', document.getElementById('login-max-attempts').value);
             formData.append('login_lockout_time', document.getElementById('login-lockout-time').value);
             formData.append('session_timeout', document.getElementById('session-timeout').value);
+            formData.append('csrf_token', csrfToken);
 
             try {
                 const res = await fetch('api/install.php', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'same-origin'
                 });
+                updateCSRFToken(res);
                 const data = await res.json();
 
                 if (data.success) {

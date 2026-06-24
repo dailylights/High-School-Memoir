@@ -25,7 +25,12 @@ function isCurrentUserAdmin($conn, $userId) {
 }
 
 if ($action == 'toggle_like') {
-    $memoir_id = $_POST['memoir_id'] ?? 0;
+    $memoir_id = intval($_POST['memoir_id'] ?? 0);
+    
+    if ($memoir_id <= 0) {
+        echo json_encode(["success" => false, "message" => "无效的回忆录ID"]);
+        exit;
+    }
     
     // Check if liked
     $check = $conn->prepare("SELECT id FROM likes WHERE memoir_id = ? AND user_id = ?");
@@ -309,7 +314,9 @@ if ($action == 'toggle_like') {
         $stmt->execute();
         
         // Update count
-        $conn->query("UPDATE memoirs SET favorite_count = GREATEST(0, favorite_count - 1) WHERE id = $memoir_id");
+        $updateStmt = $conn->prepare("UPDATE memoirs SET favorite_count = GREATEST(0, favorite_count - 1) WHERE id = ?");
+        $updateStmt->bind_param("i", $memoir_id);
+        $updateStmt->execute();
         
         echo json_encode(["success" => true, "favorited" => false]);
     } else {
@@ -319,7 +326,9 @@ if ($action == 'toggle_like') {
         $stmt->execute();
         
         // Update count
-        $conn->query("UPDATE memoirs SET favorite_count = favorite_count + 1 WHERE id = $memoir_id");
+        $updateStmt = $conn->prepare("UPDATE memoirs SET favorite_count = favorite_count + 1 WHERE id = ?");
+        $updateStmt->bind_param("i", $memoir_id);
+        $updateStmt->execute();
         
         echo json_encode(["success" => true, "favorited" => true]);
     }
@@ -400,16 +409,24 @@ if ($action == 'toggle_like') {
     $stmt->execute();
     
     // Update share count
-    $conn->query("UPDATE memoirs SET share_count = share_count + 1 WHERE id = $memoir_id");
+    $updateStmt = $conn->prepare("UPDATE memoirs SET share_count = share_count + 1 WHERE id = ?");
+    $updateStmt->bind_param("i", $memoir_id);
+    $updateStmt->execute();
     
     // Return share URL/info for external sharing
     $shareUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/memoir.html?id=' . $memoir_id;
+    
+    // Get share count
+    $countStmt = $conn->prepare("SELECT share_count FROM memoirs WHERE id = ?");
+    $countStmt->bind_param("i", $memoir_id);
+    $countStmt->execute();
+    $shareCount = $countStmt->get_result()->fetch_assoc()['share_count'];
     
     echo json_encode([
         "success" => true, 
         "message" => "分享成功",
         "share_url" => $shareUrl,
-        "share_count" => $conn->query("SELECT share_count FROM memoirs WHERE id = $memoir_id")->fetch_assoc()['share_count']
+        "share_count" => $shareCount
     ]);
 
 } elseif ($action == 'get_shares') {
@@ -520,7 +537,9 @@ if ($action == 'toggle_like') {
                 $relInsert->bind_param("ii", $memoir_id, $tag_id);
                 if ($relInsert->execute()) {
                     // Update tag use count
-                    $conn->query("UPDATE tags SET use_count = use_count + 1 WHERE id = $tag_id");
+                    $updateTag = $conn->prepare("UPDATE tags SET use_count = use_count + 1 WHERE id = ?");
+                    $updateTag->bind_param("i", $tag_id);
+                    $updateTag->execute();
                     $addedTags[] = ['id' => $tag_id, 'name' => $tagName];
                 }
             }
@@ -560,7 +579,9 @@ if ($action == 'toggle_like') {
     
     if ($deleteStmt->execute() && $deleteStmt->affected_rows > 0) {
         // Update tag use count
-        $conn->query("UPDATE tags SET use_count = GREATEST(0, use_count - 1) WHERE id = $tag_id");
+        $updateTag = $conn->prepare("UPDATE tags SET use_count = GREATEST(0, use_count - 1) WHERE id = ?");
+        $updateTag->bind_param("i", $tag_id);
+        $updateTag->execute();
         echo json_encode(["success" => true, "message" => "标签已移除"]);
     } else {
         echo json_encode(["success" => false, "message" => "标签不存在"]);
@@ -636,7 +657,9 @@ if ($action == 'toggle_like') {
         $stmt->execute();
         
         // Update count
-        $conn->query("UPDATE comments SET like_count = GREATEST(0, like_count - 1) WHERE id = $comment_id");
+        $updateStmt = $conn->prepare("UPDATE comments SET like_count = GREATEST(0, like_count - 1) WHERE id = ?");
+        $updateStmt->bind_param("i", $comment_id);
+        $updateStmt->execute();
         
         echo json_encode(["success" => true, "liked" => false]);
     } else {
@@ -646,7 +669,9 @@ if ($action == 'toggle_like') {
         $stmt->execute();
         
         // Update count
-        $conn->query("UPDATE comments SET like_count = like_count + 1 WHERE id = $comment_id");
+        $updateStmt = $conn->prepare("UPDATE comments SET like_count = like_count + 1 WHERE id = ?");
+        $updateStmt->bind_param("i", $comment_id);
+        $updateStmt->execute();
         
         echo json_encode(["success" => true, "liked" => true]);
     }

@@ -1,7 +1,57 @@
 <?php
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED);
 ini_set('display_errors', 0);
-header('Content-Type: application/json; charset=UTF-8');
+
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+
+session_start();
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+    'http://' . ($_SERVER['HTTP_HOST'] ?? ''),
+    'https://' . ($_SERVER['HTTP_HOST'] ?? ''),
+];
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Credentials: true");
+    header("Vary: Origin");
+}
+header("Access-Control-Allow-Headers: Content-Type, X-CSRF-Token");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Content-Type: application/json; charset=UTF-8");
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("X-XSS-Protection: 1; mode=block");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+
+function generateInstallCSRFToken() {
+    if (empty($_SESSION['install_csrf_token'])) {
+        $_SESSION['install_csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['install_csrf_token'];
+}
+
+function validateInstallCSRFToken() {
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($token) || empty($_SESSION['install_csrf_token'])) {
+        return false;
+    }
+    return hash_equals($_SESSION['install_csrf_token'], $token);
+}
+
+function installCSRFProtection() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!validateInstallCSRFToken()) {
+            sendResponse(false, '请求验证失败，请刷新页面重试');
+        }
+    }
+    header('X-CSRF-Token: ' . generateInstallCSRFToken());
+}
+
+generateInstallCSRFToken();
 
 $lockFile = __DIR__ . '/install.lock';
 $configFile = __DIR__ . '/config.php';
@@ -33,6 +83,8 @@ if ($action == 'check_status') {
 if (file_exists($lockFile)) {
     sendResponse(false, '系统已安装，如需重新安装请删除 api/install.lock 文件');
 }
+
+installCSRFProtection();
 
 if ($action == 'test_db') {
     $host = trim($_POST['db_host'] ?? '127.0.0.1');
