@@ -52,6 +52,7 @@ function installCSRFProtection() {
 }
 
 generateInstallCSRFToken();
+header('X-CSRF-Token: ' . generateInstallCSRFToken());
 
 $lockFile = __DIR__ . '/install.lock';
 $configFile = __DIR__ . '/config.php';
@@ -84,7 +85,9 @@ if (file_exists($lockFile)) {
     sendResponse(false, '系统已安装，如需重新安装请删除 api/install.lock 文件');
 }
 
-installCSRFProtection();
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateInstallCSRFToken()) {
+    sendResponse(false, '请求验证失败，请刷新页面重试');
+}
 
 if ($action == 'test_db') {
     $host = trim($_POST['db_host'] ?? '127.0.0.1');
@@ -126,14 +129,22 @@ if ($action == 'test_db') {
     $dbExists = $conn->select_db($name);
     if (!$dbExists) {
         $safeName = $conn->real_escape_string($name);
-        if ($conn->query("CREATE DATABASE IF NOT EXISTS `$safeName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")) {
-            $conn->select_db($name);
+        @$conn->query("CREATE DATABASE IF NOT EXISTS `$safeName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if ($conn->errno == 1044 || $conn->errno == 1045) {
+            $conn->close();
+            sendResponse(false, '数据库不存在且当前用户无创建权限。请先手动创建数据库 "' . $name . '"，或使用已有数据库。错误：' . $conn->error, [
+                'error_code' => 'DB_CREATE_DENIED',
+                'db_name' => $name
+            ]);
+        }
+        if ($conn->select_db($name)) {
             $dbExists = true;
         }
     }
 
     if (!$dbExists) {
-        sendResponse(false, '数据库不存在且无法创建，请手动创建');
+        $conn->close();
+        sendResponse(false, '数据库不存在且无法创建，请检查数据库名称或手动创建数据库');
     }
 
     $conn->close();
@@ -191,10 +202,18 @@ if ($action == 'install') {
 
     if (!$conn->select_db($dbname)) {
         $safeDbName = $conn->real_escape_string($dbname);
-        if (!$conn->query("CREATE DATABASE IF NOT EXISTS `$safeDbName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")) {
-            sendResponse(false, '数据库创建失败：' . $conn->error);
+        @$conn->query("CREATE DATABASE IF NOT EXISTS `$safeDbName` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if ($conn->errno == 1044 || $conn->errno == 1045) {
+            $conn->close();
+            sendResponse(false, '数据库不存在且当前用户无创建权限。请先手动创建数据库 "' . $dbname . '" 后再安装。错误：' . $conn->error, [
+                'error_code' => 'DB_CREATE_DENIED',
+                'db_name' => $dbname
+            ]);
         }
-        $conn->select_db($dbname);
+        if (!$conn->select_db($dbname)) {
+            $conn->close();
+            sendResponse(false, '数据库不存在且无法创建，请检查数据库名称或手动创建数据库');
+        }
     }
 
     $sqlFile = __DIR__ . '/../database.sql';
