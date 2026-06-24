@@ -460,13 +460,29 @@ switch ($action) {
                 $fileType = $file['type'];
                 $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                 
-                if (!in_array($fileType, $allowedTypes) && !in_array($extension, $allowedExts)) {
+                if (!in_array($fileType, $allowedTypes) || !in_array($extension, $allowedExts)) {
                     echo json_encode(['success' => false, 'message' => '不支持的图片格式']);
                     exit;
                 }
                 
                 if ($file['size'] > $maxSize) {
                     echo json_encode(['success' => false, 'message' => '图片大小不能超过5MB']);
+                    exit;
+                }
+                
+                $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $mimeType = finfo_file($finfo, $file['tmp_name']);
+                    finfo_close($finfo);
+                    if (!in_array($mimeType, $allowedTypes)) {
+                        echo json_encode(['success' => false, 'message' => '不支持的图片格式']);
+                        exit;
+                    }
+                }
+                
+                $imageInfo = @getimagesize($file['tmp_name']);
+                if (!$imageInfo || !in_array($imageInfo['mime'], $allowedTypes)) {
+                    echo json_encode(['success' => false, 'message' => '不是有效的图片文件']);
                     exit;
                 }
                 

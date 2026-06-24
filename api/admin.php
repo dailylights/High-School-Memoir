@@ -523,6 +523,352 @@ if ($action == 'check_install') {
         echo json_encode(['success' => false, 'message' => '操作失败']);
     }
 
+} elseif ($action == 'get_memoirs') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $page = intval($_GET['page'] ?? 1);
+    $limit = intval($_GET['limit'] ?? 20);
+    $page = max(1, $page);
+    $limit = max(1, min(100, $limit));
+    $offset = ($page - 1) * $limit;
+    
+    $total = $conn->query("SELECT COUNT(*) as count FROM memoirs")->fetch_assoc()['count'];
+    
+    $stmt = $conn->prepare("SELECT m.*, u.name as author_name, u.username as author_username, t.name as topic_name,
+        (SELECT COUNT(*) FROM likes l WHERE l.memoir_id = m.id) as like_count,
+        (SELECT COUNT(*) FROM comments c WHERE c.memoir_id = m.id) as comment_count
+        FROM memoirs m 
+        LEFT JOIN users u ON m.user_id = u.id 
+        LEFT JOIN topics t ON m.topic_id = t.id 
+        ORDER BY m.id DESC LIMIT ? OFFSET ?");
+    $stmt->bind_param("ii", $limit, $offset);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $memoirs = [];
+    while ($row = $result->fetch_assoc()) {
+        $memoirs[] = $row;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'memoirs' => $memoirs,
+        'pagination' => [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => intval($total),
+            'total_pages' => ceil($total / $limit)
+        ]
+    ]);
+
+} elseif ($action == 'delete_memoir') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $memoirId = intval($_POST['memoir_id'] ?? 0);
+    if (!$memoirId) {
+        echo json_encode(['success' => false, 'message' => '无效的回忆录ID']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM memoirs WHERE id = ?");
+    $stmt->bind_param("i", $memoirId);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '回忆录已删除']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '删除失败']);
+    }
+
+} elseif ($action == 'get_comments') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $page = intval($_GET['page'] ?? 1);
+    $limit = intval($_GET['limit'] ?? 20);
+    $page = max(1, $page);
+    $limit = max(1, min(100, $limit));
+    $offset = ($page - 1) * $limit;
+    
+    $total = $conn->query("SELECT COUNT(*) as count FROM comments")->fetch_assoc()['count'];
+    
+    $stmt = $conn->prepare("SELECT c.*, u.name as author_name, u.username as author_username, m.content as memoir_content
+        FROM comments c 
+        LEFT JOIN users u ON c.user_id = u.id 
+        LEFT JOIN memoirs m ON c.memoir_id = m.id 
+        ORDER BY c.id DESC LIMIT ? OFFSET ?");
+    $stmt->bind_param("ii", $limit, $offset);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $comments = [];
+    while ($row = $result->fetch_assoc()) {
+        $comments[] = $row;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'comments' => $comments,
+        'pagination' => [
+            'page' => $page,
+            'limit' => $limit,
+            'total' => intval($total),
+            'total_pages' => ceil($total / $limit)
+        ]
+    ]);
+
+} elseif ($action == 'delete_comment') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $commentId = intval($_POST['comment_id'] ?? 0);
+    if (!$commentId) {
+        echo json_encode(['success' => false, 'message' => '无效的评论ID']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM comments WHERE id = ?");
+    $stmt->bind_param("i", $commentId);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '评论已删除']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '删除失败']);
+    }
+
+} elseif ($action == 'get_topics') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $result = $conn->query("SELECT t.*, u.name as creator_name,
+        (SELECT COUNT(*) FROM memoirs m WHERE m.topic_id = t.id) as memoir_count
+        FROM topics t 
+        LEFT JOIN users u ON t.created_by = u.id 
+        ORDER BY t.id DESC");
+    
+    $topics = [];
+    while ($row = $result->fetch_assoc()) {
+        $topics[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'topics' => $topics]);
+
+} elseif ($action == 'add_topic') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $name = trim($_POST['name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => '话题名称不能为空']);
+        exit;
+    }
+    
+    $checkStmt = $conn->prepare("SELECT id FROM topics WHERE name = ?");
+    $checkStmt->bind_param("s", $name);
+    $checkStmt->execute();
+    if ($checkStmt->get_result()->num_rows > 0) {
+        echo json_encode(['success' => false, 'message' => '该话题已存在']);
+        exit;
+    }
+    
+    $userId = $_SESSION['user_id'];
+    $stmt = $conn->prepare("INSERT INTO topics (name, description, created_by) VALUES (?, ?, ?)");
+    $stmt->bind_param("ssi", $name, $description, $userId);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '话题添加成功']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '添加失败']);
+    }
+
+} elseif ($action == 'delete_topic') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $topicId = intval($_POST['topic_id'] ?? 0);
+    if (!$topicId) {
+        echo json_encode(['success' => false, 'message' => '无效的话题ID']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM topics WHERE id = ?");
+    $stmt->bind_param("i", $topicId);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '话题已删除']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '删除失败']);
+    }
+
+} elseif ($action == 'get_announcements') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $result = $conn->query("SELECT a.*, u.name as creator_name 
+        FROM announcements a 
+        LEFT JOIN users u ON a.created_by = u.id 
+        ORDER BY a.id DESC");
+    
+    $announcements = [];
+    while ($row = $result->fetch_assoc()) {
+        $announcements[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'announcements' => $announcements]);
+
+} elseif ($action == 'add_announcement') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $title = trim($_POST['title'] ?? '');
+    $content = trim($_POST['content'] ?? '');
+    
+    if (empty($title) || empty($content)) {
+        echo json_encode(['success' => false, 'message' => '标题和内容不能为空']);
+        exit;
+    }
+    
+    $userId = $_SESSION['user_id'];
+    $stmt = $conn->prepare("INSERT INTO announcements (title, content, created_by) VALUES (?, ?, ?)");
+    $stmt->bind_param("ssi", $title, $content, $userId);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '公告添加成功']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '添加失败']);
+    }
+
+} elseif ($action == 'update_announcement') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $announcementId = intval($_POST['announcement_id'] ?? 0);
+    $title = trim($_POST['title'] ?? '');
+    $content = trim($_POST['content'] ?? '');
+    
+    if (!$announcementId) {
+        echo json_encode(['success' => false, 'message' => '无效的公告ID']);
+        exit;
+    }
+    
+    if (empty($title) || empty($content)) {
+        echo json_encode(['success' => false, 'message' => '标题和内容不能为空']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("UPDATE announcements SET title = ?, content = ? WHERE id = ?");
+    $stmt->bind_param("ssi", $title, $content, $announcementId);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '公告已更新']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '更新失败']);
+    }
+
+} elseif ($action == 'delete_announcement') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $announcementId = intval($_POST['announcement_id'] ?? 0);
+    if (!$announcementId) {
+        echo json_encode(['success' => false, 'message' => '无效的公告ID']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
+    $stmt->bind_param("i", $announcementId);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '公告已删除']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '删除失败']);
+    }
+
+} elseif ($action == 'get_classes') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $result = $conn->query("SELECT c.*, u.name as creator_name 
+        FROM classes c 
+        LEFT JOIN users u ON c.created_by = u.id 
+        ORDER BY c.id DESC");
+    
+    $classes = [];
+    while ($row = $result->fetch_assoc()) {
+        $classes[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'classes' => $classes]);
+
+} elseif ($action == 'add_class') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $name = trim($_POST['name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => '班级名称不能为空']);
+        exit;
+    }
+    
+    $userId = $_SESSION['user_id'];
+    $inviteCode = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+    
+    $stmt = $conn->prepare("INSERT INTO classes (name, description, created_by, invite_code) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssis", $name, $description, $userId, $inviteCode);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '班级添加成功']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '添加失败']);
+    }
+
+} elseif ($action == 'delete_class') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => '需要管理员权限']);
+        exit;
+    }
+    
+    $classId = intval($_POST['class_id'] ?? 0);
+    if (!$classId) {
+        echo json_encode(['success' => false, 'message' => '无效的班级ID']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM classes WHERE id = ?");
+    $stmt->bind_param("i", $classId);
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => '班级已删除']);
+    } else {
+        echo json_encode(['success' => false, 'message' => '删除失败']);
+    }
+
 } else {
     echo json_encode(['success' => false, 'message' => '无效的操作: ' . $action]);
 }

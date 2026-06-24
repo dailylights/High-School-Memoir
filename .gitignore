@@ -3,6 +3,8 @@
 .env.local
 .env.*.local
 config.local.php
+api/config.php
+api/install.lock
 *.log
 npm-debug.log*
 yarn-debug.log*
