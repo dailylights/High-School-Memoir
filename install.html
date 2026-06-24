@@ -690,7 +690,13 @@
             try {
                 const res = await fetch('api/install.php', { method: 'POST', body: formData, credentials: 'same-origin' });
                 updateCSRFToken(res);
-                const data = await res.json();
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    const text = await res.text();
+                    throw new Error('服务器返回错误（状态码 ' + res.status + '）：' + (text.length > 200 ? text.substring(0, 200) + '...' : text));
+                }
                 resultDiv.style.display = 'block';
                 if (data.success) {
                     dbTested = true;
@@ -708,7 +714,7 @@
                 resultDiv.style.display = 'block';
                 resultDiv.style.background = '#f8d7da';
                 resultDiv.style.color = '#721c24';
-                resultDiv.textContent = '❌ 网络错误：' + (err.message || err) + '，请重试';
+                resultDiv.textContent = '❌ 错误：' + (err.message || err);
             }
             
             btn.innerHTML = '🔌 测试数据库连接';
@@ -817,7 +823,13 @@
                     credentials: 'same-origin'
                 });
                 updateCSRFToken(res);
-                const data = await res.json();
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    const text = await res.text();
+                    throw new Error('服务器返回错误（状态码 ' + res.status + '）：' + (text.length > 200 ? text.substring(0, 200) + '...' : text));
+                }
 
                 if (data.success) {
                     document.getElementById('install-footer').style.display = 'none';
@@ -841,7 +853,7 @@
                     btnNext.textContent = '完成安装 ✓';
                 }
             } catch (err) {
-                showToast('网络错误，请重试');
+                showToast('安装出错：' + (err.message || err));
                 btnNext.disabled = false;
                 btnNext.textContent = '完成安装 ✓';
             }

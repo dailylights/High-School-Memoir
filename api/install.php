@@ -1,31 +1,71 @@
 <?php
-error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED);
+@ob_start();
+error_reporting(0);
 ini_set('display_errors', 0);
 
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-
-session_start();
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigins = [
-    'http://' . ($_SERVER['HTTP_HOST'] ?? ''),
-    'https://' . ($_SERVER['HTTP_HOST'] ?? ''),
-];
-if (in_array($origin, $allowedOrigins)) {
-    header("Access-Control-Allow-Origin: " . $origin);
-    header("Access-Control-Allow-Credentials: true");
-    header("Vary: Origin");
+function isSecureRequest() {
+    if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === 1)) {
+        return true;
+    }
+    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+        return true;
+    }
+    if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
+        return true;
+    }
+    return false;
 }
-header("Access-Control-Allow-Headers: Content-Type, X-CSRF-Token");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+
+function getRequestHost() {
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $port = $_SERVER['SERVER_PORT'] ?? 80;
+    if (strpos($host, ':') !== false) {
+        return $host;
+    }
+    if ((isSecureRequest() && $port != 443) || (!isSecureRequest() && $port != 80)) {
+        return $host . ':' . $port;
+    }
+    return $host;
+}
+
+@ini_set('session.cookie_httponly', 1);
+@ini_set('session.cookie_samesite', 'Lax');
+@ini_set('session.use_only_cookies', 1);
+@ini_set('session.cookie_secure', isSecureRequest() ? 1 : 0);
+@ini_set('session.use_trans_sid', 0);
+
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
 header("Referrer-Policy: strict-origin-when-cross-origin");
+header("Access-Control-Allow-Headers: Content-Type, X-CSRF-Token");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$requestHost = getRequestHost();
+$allowedOrigins = [
+    'http://' . $requestHost,
+    'https://' . $requestHost,
+];
+if (!empty($origin) && in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Credentials: true");
+    header("Vary: Origin");
+} else {
+    $siteOrigin = (isSecureRequest() ? 'https://' : 'http://') . $requestHost;
+    header("Access-Control-Allow-Origin: " . $siteOrigin);
+    header("Access-Control-Allow-Credentials: true");
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 function generateInstallCSRFToken() {
     if (empty($_SESSION['install_csrf_token'])) {
