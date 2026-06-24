@@ -68,6 +68,8 @@ if ($action == 'save') {
     // 如果有图片上传
     if (!empty($_FILES['images']['name'][0])) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
         $uploadDir = "../uploads/drafts/";
         
         if (!file_exists($uploadDir)) {
@@ -78,6 +80,32 @@ if ($action == 'save') {
             if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
                 $tmpName = $_FILES['images']['tmp_name'][$key];
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                
+                // 验证扩展名
+                if (!in_array($ext, $allowedExts)) {
+                    continue; // 跳过无效扩展名
+                }
+                
+                // 验证MIME类型
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $tmpName);
+                finfo_close($finfo);
+                
+                if (!in_array($mimeType, $allowedTypes)) {
+                    continue; // 跳过无效MIME类型
+                }
+                
+                // 验证是否为真实图片
+                $imageInfo = @getimagesize($tmpName);
+                if (!$imageInfo || !in_array($imageInfo['mime'], $allowedTypes)) {
+                    continue; // 跳过非图片文件
+                }
+                
+                // 验证文件大小
+                if ($_FILES['images']['size'][$key] > $maxSize) {
+                    continue; // 跳过过大文件
+                }
+                
                 $newName = "draft_" . $userId . "_" . time() . "_" . bin2hex(random_bytes(4)) . "." . $ext;
                 $targetPath = $uploadDir . $newName;
                 

@@ -1,4 +1,6 @@
-DROP DATABASE IF EXISTS high_school_memoir;
+-- 初始化数据库（首次安装时运行）
+-- 如果是升级安装，请注释掉以下两行
+-- DROP DATABASE IF EXISTS high_school_memoir;
 CREATE DATABASE IF NOT EXISTS high_school_memoir;
 USE high_school_memoir;
 
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS messages (
     is_recalled TINYINT(1) DEFAULT 0 COMMENT '是否已撤回',
     recalled_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_conversation_id (conversation_id),
     INDEX idx_sender_id (sender_id),
@@ -97,19 +100,16 @@ CREATE TABLE IF NOT EXISTS conversations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user1_id INT NOT NULL,
     user2_id INT NOT NULL,
-    last_message_id INT DEFAULT NULL,
+    last_message_id INT DEFAULT NULL COMMENT '最后消息ID（非外键，避免循环引用）',
     last_message_time DATETIME DEFAULT NULL,
     user1_deleted TINYINT(1) DEFAULT 0 COMMENT '用户1删除标记',
     user2_deleted TINYINT(1) DEFAULT 0 COMMENT '用户2删除标记',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (last_message_id) REFERENCES messages(id) ON DELETE SET NULL,
-    UNIQUE KEY unique_conversation (user1_id, user2_id)
+    UNIQUE KEY unique_conversation (user1_id, user2_id),
+    INDEX idx_last_message_id (last_message_id)
 );
-
--- 添加conversation_id外键到messages表（在conversations表创建后）
-ALTER TABLE messages ADD FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;
 
 -- 用户拉黑/屏蔽表
 CREATE TABLE IF NOT EXISTS blocks (
