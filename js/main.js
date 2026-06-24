@@ -59,7 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// 全局状态
 let currentUser = null;
+let unreadMessageCount = 0;
+let messagePollingInterval = null;
 
 function toggleEditProfile() {
     const card = document.getElementById('edit-profile-card');
@@ -129,6 +132,7 @@ async function checkSession() {
             if (navAuth) {
                 navAuth.innerHTML = `
                     <a href="index.html" class="nav-item">首页</a>
+                    <a href="messages.html" class="nav-item" id="nav-messages">💬 私信</a>
                     <a href="profile.html" class="nav-item">个人中心</a>
                     <span class="nav-item" onclick="logout()">退出</span>
                 `;
@@ -144,16 +148,15 @@ async function checkSession() {
                             <h3 style="text-align: center;">${data.user.name}</h3>
                             <p style="text-align: center; color: #666;">${data.user.class}</p>
                             <div style="margin-top: 15px; text-align: center;">
+                                <a href="messages.html" class="btn" style="background: #6c5ce7; color: white; margin-right: 5px;">💬 私信</a>
                                 <a href="profile.html" class="btn btn-primary" style="font-size: 0.8rem;">管理账号</a>
                             </div>
                         </div>
                     </div>
                 `;
             }
-            // Show post box
-            // We no longer toggle display here, as it's a modal now controlled by buttons
-            // const postBox = document.getElementById('create-post-container');
-            // if (postBox) postBox.style.display = 'block';
+            // 启动私信未读数轮询
+            startMessagePolling();
         } else {
             currentUser = null;
             if (navAuth) {
@@ -904,4 +907,75 @@ function renderProfileInfo() {
             <p>${currentUser.phone}</p>
         </div>
     `;
+}
+
+// ==================== 私信未读数功能 ====================
+
+// 启动私信未读数轮询
+function startMessagePolling() {
+    // 立即获取一次未读数
+    fetchUnreadMessageCount();
+    
+    // 每10秒轮询一次
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+    }
+    messagePollingInterval = setInterval(() => {
+        fetchUnreadMessageCount();
+    }, 10000);
+}
+
+// 获取未读消息数
+async function fetchUnreadMessageCount() {
+    try {
+        const res = await fetch(API_BASE + 'messages.php?action=get_unread_count');
+        const data = await res.json();
+        
+        if (data.success && data.unread_count > 0) {
+            updateMessageBadge(data.unread_count);
+        } else {
+            updateMessageBadge(0);
+        }
+    } catch (e) {
+        console.error("Fetch unread count failed", e);
+    }
+}
+
+// 更新私信角标
+function updateMessageBadge(count) {
+    unreadMessageCount = count;
+    
+    const navMessages = document.getElementById('nav-messages');
+    if (!navMessages) return;
+    
+    // 移除旧的角标
+    const oldBadge = navMessages.querySelector('.message-badge');
+    if (oldBadge) {
+        oldBadge.remove();
+    }
+    
+    // 添加新角标
+    if (count > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'message-badge';
+        badge.style.cssText = `
+            background: #e74c3c;
+            color: white;
+            font-size: 0.7rem;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            padding: 0 5px;
+        `;
+        badge.textContent = count > 99 ? '99+' : count;
+        navMessages.style.position = 'relative';
+        navMessages.appendChild(badge);
+    }
 }
