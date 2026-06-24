@@ -1,5 +1,8 @@
 Options -Indexes
-<FilesMatch "\.(php|php5|phtml|pl|py|rb|sh)$">
+Options -ExecCGI
+AddHandler default-handler .php .php5 .php4 .php3 .phtml .pl .py .jsp .asp .htm .shtml .sh .cgi
+php_flag engine off
+<FilesMatch "\.(php|phtml|php3|php4|php5|pl|py|jsp|asp|sh|cgi|htaccess|htpasswd|ini)$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>
