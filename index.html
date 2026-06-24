@@ -60,24 +60,32 @@
 
     <!-- Create Post Modal -->
     <div class="modal-overlay" id="post-modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px;">
             <span class="modal-close" onclick="closePostModal()">&times;</span>
             <div class="sidebar-title">发布回忆</div>
             <form id="post-form">
                 <textarea name="content" placeholder="分享你的高中回忆..."></textarea>
                 
-                <div id="image-preview-container">
-                    <!-- Images will be inserted here -->
-                    <div class="upload-trigger" onclick="document.getElementById('post-images').click()">+</div>
+                <div id="image-preview-container" style="margin-bottom: 15px;">
+                    <div class="upload-trigger" onclick="document.getElementById('post-images').click()">+ 图片</div>
                 </div>
+                
+                <div id="video-preview-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    <div class="upload-trigger" onclick="document.getElementById('post-videos').click()" style="background: #e8f5e9; color: #2e7d32;">+ 视频</div>
+                </div>
+                
+                <div id="audio-preview-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    <div class="upload-trigger" onclick="document.getElementById('post-audios').click()" style="background: #fff3e0; color: #e65100;">+ 音频</div>
+                </div>
+
+                <input type="file" name="images[]" id="post-images" multiple accept="image/*" style="display: none;" onchange="handleImageSelection(this)">
+                <input type="file" name="videos[]" id="post-videos" multiple accept="video/*" style="display: none;" onchange="handleVideoSelection(this)">
+                <input type="file" name="audios[]" id="post-audios" multiple accept="audio/*" style="display: none;" onchange="handleAudioSelection(this)">
 
                 <div class="create-actions">
                     <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
-                        <input type="file" name="images[]" id="post-images" multiple accept="image/*" style="display: none;" onchange="handleImageSelection(this)">
-                        
                         <input type="text" name="topic_name" id="topic-input" placeholder="输入话题 (例如: 运动会)" list="topic-suggestions" style="padding: 10px 15px; border-radius: 20px; border: 1px solid #ddd; outline: none; width: 100%; max-width: 200px; background: #f8f9fa;">
                         <datalist id="topic-suggestions">
-                            <!-- Populated by JS -->
                         </datalist>
                     </div>
                     <button type="submit" class="btn btn-primary" style="padding: 8px 25px;">发布</button>

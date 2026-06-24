@@ -138,3 +138,26 @@ CREATE TABLE IF NOT EXISTS photo_likes (
     FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- 回忆录媒体表（支持图片、视频、音频）
+CREATE TABLE IF NOT EXISTS memoir_media (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    memoir_id INT NOT NULL,
+    user_id INT NOT NULL,
+    media_type ENUM('image', 'video', 'audio') NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    file_size BIGINT DEFAULT 0,
+    duration INT DEFAULT 0,
+    thumbnail_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (memoir_id) REFERENCES memoirs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_memoir_id (memoir_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_media_type (media_type)
+);
+
+-- 为旧的images字段做向后兼容：新增has_media字段
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS media_count INT DEFAULT 0;
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS has_video TINYINT(1) DEFAULT 0;
+ALTER TABLE memoirs ADD COLUMN IF NOT EXISTS has_audio TINYINT(1) DEFAULT 0;

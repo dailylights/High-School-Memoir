@@ -273,6 +273,44 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                     imagesHtml += '</div>';
                 }
                 
+                let mediaHtml = '';
+                if (memoir.media && memoir.media.length > 0) {
+                    memoir.media.forEach(media => {
+                        if (media.media_type === 'video') {
+                            mediaHtml += `
+                                <div style="margin: 10px 0; border-radius: 8px; overflow: hidden; background: #000;">
+                                    <video controls style="width: 100%; max-height: 400px;" preload="metadata">
+                                        <source src="${media.file_path}">
+                                        您的浏览器不支持视频播放
+                                    </video>
+                                </div>
+                            `;
+                        } else if (media.media_type === 'audio') {
+                            mediaHtml += `
+                                <div style="margin: 10px 0; padding: 15px; background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                        <div style="font-size: 1.5rem;">🎵</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 500; font-size: 0.9rem;">音频回忆</div>
+                                            <div style="font-size: 0.75rem; color: #e65100;">${(media.file_size / 1024 / 1024).toFixed(1)} MB</div>
+                                        </div>
+                                    </div>
+                                    <audio controls style="width: 100%;">
+                                        <source src="${media.file_path}">
+                                        您的浏览器不支持音频播放
+                                    </audio>
+                                </div>
+                            `;
+                        } else if (media.media_type === 'image') {
+                            imagesHtml = imagesHtml || '<div class="post-images">';
+                            imagesHtml += `<img src="${media.file_path}" onclick="window.open('${media.file_path}', '_blank')">`;
+                        }
+                    });
+                    if (imagesHtml && !imagesHtml.endsWith('</div>')) {
+                        imagesHtml += '</div>';
+                    }
+                }
+                
                 const deleteBtn = (currentUser && currentUser.id == memoir.user_id) 
                     ? `<span style="margin-left: auto; color: red; cursor: pointer; font-size: 0.8rem;" onclick="deleteMemoir(${memoir.id})">删除</span>` 
                     : '';
@@ -290,8 +328,9 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                         </div>
                         ${deleteBtn}
                     </div>
-                    <div class="post-content">${topicHtml}${memoir.content}</div>
+                    <div class="post-content">${topicHtml}${escapeHtml(memoir.content)}</div>
                     ${imagesHtml}
+                    ${mediaHtml}
                     <div class="post-actions">
                         <div class="action-btn ${likeClass}" onclick="toggleLike(this, ${memoir.id})">
                             <span>❤️</span> <span class="count">${memoir.likes_count}</span>
@@ -367,6 +406,8 @@ function renderPagination(pagination) {
 }
 
 let selectedFiles = [];
+let selectedVideos = [];
+let selectedAudios = [];
 let currentPage = 1;
 let currentFilters = {
     search: '',
@@ -401,13 +442,51 @@ function handleImageSelection(input) {
             selectedFiles.push(file);
         });
         renderImagePreviews();
-        input.value = ''; // Reset input to allow selecting same file again
+        input.value = '';
+    }
+}
+
+function handleVideoSelection(input) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            if (file.size <= 100 * 1024 * 1024) {
+                selectedVideos.push(file);
+            } else {
+                alert('视频 ' + file.name + ' 超过100MB限制');
+            }
+        });
+        renderVideoPreviews();
+        input.value = '';
+    }
+}
+
+function handleAudioSelection(input) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            if (file.size <= 50 * 1024 * 1024) {
+                selectedAudios.push(file);
+            } else {
+                alert('音频 ' + file.name + ' 超过50MB限制');
+            }
+        });
+        renderAudioPreviews();
+        input.value = '';
     }
 }
 
 function removeImage(index) {
     selectedFiles.splice(index, 1);
     renderImagePreviews();
+}
+
+function removeVideo(index) {
+    selectedVideos.splice(index, 1);
+    renderVideoPreviews();
+}
+
+function removeAudio(index) {
+    selectedAudios.splice(index, 1);
+    renderAudioPreviews();
 }
 
 function renderImagePreviews() {
@@ -465,6 +544,109 @@ function renderImagePreviews() {
     container.appendChild(trigger);
 }
 
+function renderVideoPreviews() {
+    const container = document.getElementById('video-preview-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    selectedVideos.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        div.style.width = '120px';
+        div.style.height = '90px';
+        div.style.position = 'relative';
+        div.style.borderRadius = '8px';
+        div.style.overflow = 'hidden';
+        div.style.background = '#000';
+        
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+        video.muted = true;
+        
+        const removeBtn = document.createElement('div');
+        removeBtn.className = 'preview-remove';
+        removeBtn.style.cssText = 'position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.7);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = (e) => { e.stopPropagation(); removeVideo(index); };
+        
+        const videoIcon = document.createElement('div');
+        videoIcon.style.cssText = 'position:absolute;bottom:5px;left:5px;color:white;font-size:0.75rem;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;';
+        videoIcon.textContent = '🎬 ' + (file.size / 1024 / 1024).toFixed(1) + 'MB';
+        
+        div.appendChild(video);
+        div.appendChild(removeBtn);
+        div.appendChild(videoIcon);
+        container.appendChild(div);
+    });
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'upload-trigger';
+    trigger.style.cssText = 'background: #e8f5e9; color: #2e7d32;';
+    trigger.innerHTML = '+ 视频';
+    trigger.onclick = () => document.getElementById('post-videos').click();
+    container.appendChild(trigger);
+}
+
+function renderAudioPreviews() {
+    const container = document.getElementById('audio-preview-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    selectedAudios.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        div.style.width = '200px';
+        div.style.minHeight = '60px';
+        div.style.position = 'relative';
+        div.style.borderRadius = '8px';
+        div.style.background = 'linear-gradient(135deg, #fff3e0, #ffe0b2)';
+        div.style.padding = '10px';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.gap = '10px';
+        
+        const icon = document.createElement('div');
+        icon.style.cssText = 'font-size: 1.5rem;';
+        icon.textContent = '🎵';
+        
+        const info = document.createElement('div');
+        info.style.cssText = 'flex:1; min-width:0;';
+        info.innerHTML = `
+            <div style="font-size: 0.8rem; font-weight: 500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(file.name)}</div>
+            <div style="font-size: 0.7rem; color: #e65100;">${(file.size / 1024 / 1024).toFixed(1)} MB</div>
+        `;
+        
+        const removeBtn = document.createElement('div');
+        removeBtn.style.cssText = 'width:22px;height:22px;border-radius:50%;background:rgba(230,81,0,0.7);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;flex-shrink:0;';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = (e) => { e.stopPropagation(); removeAudio(index); };
+        
+        div.appendChild(icon);
+        div.appendChild(info);
+        div.appendChild(removeBtn);
+        container.appendChild(div);
+    });
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'upload-trigger';
+    trigger.style.cssText = 'background: #fff3e0; color: #e65100;';
+    trigger.innerHTML = '+ 音频';
+    trigger.onclick = () => document.getElementById('post-audios').click();
+    container.appendChild(trigger);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('post-modal');
@@ -478,12 +660,20 @@ async function handlePost(e) {
     const formData = new FormData(e.target);
     formData.append('action', 'create');
     
-    // Remove the original 'images[]' from form data since it only has the last selection (or empty if reset)
     formData.delete('images[]');
+    formData.delete('videos[]');
+    formData.delete('audios[]');
     
-    // Append all selected files
     selectedFiles.forEach(file => {
         formData.append('images[]', file);
+    });
+    
+    selectedVideos.forEach(file => {
+        formData.append('videos[]', file);
+    });
+    
+    selectedAudios.forEach(file => {
+        formData.append('audios[]', file);
     });
     
     try {
@@ -491,12 +681,16 @@ async function handlePost(e) {
         const data = await res.json();
         if (data.success) {
             e.target.reset();
-            selectedFiles = []; // Clear files
-            renderImagePreviews(); // Clear previews
+            selectedFiles = [];
+            selectedVideos = [];
+            selectedAudios = [];
+            renderImagePreviews();
+            renderVideoPreviews();
+            renderAudioPreviews();
             
-            closePostModal(); // Close modal on success
+            closePostModal();
             loadMemoirs();
-            loadTopicRanking(); // Refresh ranking
+            loadTopicRanking();
         } else {
             alert(data.message);
         }
