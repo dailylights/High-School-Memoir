@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS users (
     class VARCHAR(50) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     avatar VARCHAR(255) DEFAULT NULL,
+    background_image VARCHAR(255) DEFAULT NULL COMMENT '个人主页背景图',
+    bio TEXT DEFAULT NULL COMMENT '个人简介/签名',
+    visit_count INT DEFAULT 0 COMMENT '个人主页访问量',
+    email VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
+    email_verified TINYINT(1) DEFAULT 0 COMMENT '邮箱是否已验证',
+    last_login_at DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    last_login_ip VARCHAR(45) DEFAULT NULL COMMENT '最后登录IP',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -72,9 +79,17 @@ CREATE TABLE IF NOT EXISTS messages (
     conversation_id INT NOT NULL,
     sender_id INT NOT NULL,
     content TEXT NOT NULL,
+    image VARCHAR(255) DEFAULT NULL COMMENT '消息图片',
     is_read TINYINT(1) DEFAULT 0,
+    is_deleted TINYINT(1) DEFAULT 0 COMMENT '发送者删除标记',
+    is_recalled TINYINT(1) DEFAULT 0 COMMENT '是否已撤回',
+    recalled_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_conversation_id (conversation_id),
+    INDEX idx_sender_id (sender_id),
+    INDEX idx_is_read (is_read),
+    INDEX idx_created_at (created_at)
 );
 
 -- 私信会话表
@@ -84,6 +99,8 @@ CREATE TABLE IF NOT EXISTS conversations (
     user2_id INT NOT NULL,
     last_message_id INT DEFAULT NULL,
     last_message_time DATETIME DEFAULT NULL,
+    user1_deleted TINYINT(1) DEFAULT 0 COMMENT '用户1删除标记',
+    user2_deleted TINYINT(1) DEFAULT 0 COMMENT '用户2删除标记',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -93,6 +110,129 @@ CREATE TABLE IF NOT EXISTS conversations (
 
 -- 添加conversation_id外键到messages表（在conversations表创建后）
 ALTER TABLE messages ADD FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;
+
+-- 用户拉黑/屏蔽表
+CREATE TABLE IF NOT EXISTS blocks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    blocker_id INT NOT NULL COMMENT '拉黑者',
+    blocked_id INT NOT NULL COMMENT '被拉黑者',
+    reason VARCHAR(100) DEFAULT NULL COMMENT '拉黑原因',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_block (blocker_id, blocked_id),
+    FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_blocker_id (blocker_id),
+    INDEX idx_blocked_id (blocked_id)
+);
+
+-- 班级公告表
+CREATE TABLE IF NOT EXISTS class_announcements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id INT NOT NULL,
+    author_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    is_pinned TINYINT(1) DEFAULT 0 COMMENT '是否置顶',
+    view_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_class_id (class_id),
+    INDEX idx_created_at (created_at)
+);
+
+-- 班级活动表
+CREATE TABLE IF NOT EXISTS class_activities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id INT NOT NULL,
+    author_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    activity_type ENUM('gathering', 'vote', 'other') DEFAULT 'other',
+    start_time DATETIME,
+    end_time DATETIME,
+    location VARCHAR(200),
+    max_participants INT DEFAULT 0 COMMENT '最大参与人数，0表示不限',
+    status ENUM('upcoming', 'ongoing', 'ended', 'cancelled') DEFAULT 'upcoming',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_class_id (class_id),
+    INDEX idx_status (status),
+    INDEX idx_start_time (start_time)
+);
+
+-- 班级活动参与表
+CREATE TABLE IF NOT EXISTS class_activity_participants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    activity_id INT NOT NULL,
+    user_id INT NOT NULL,
+    status ENUM('going', 'interested', 'not_going') DEFAULT 'going',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_participation (activity_id, user_id),
+    FOREIGN KEY (activity_id) REFERENCES class_activities(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+);
+
+-- 班级投票表
+CREATE TABLE IF NOT EXISTS class_polls (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_id INT NOT NULL,
+    author_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    question_type ENUM('single', 'multiple') DEFAULT 'single',
+    is_anonymous TINYINT(1) DEFAULT 0 COMMENT '是否匿名投票',
+    allow_view_voters TINYINT(1) DEFAULT 1 COMMENT '是否允许查看投票人',
+    end_time DATETIME,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_class_id (class_id),
+    INDEX idx_is_active (is_active)
+);
+
+-- 班级投票选项表
+CREATE TABLE IF NOT EXISTS class_poll_options (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    option_text VARCHAR(200) NOT NULL,
+    option_order INT DEFAULT 0,
+    FOREIGN KEY (poll_id) REFERENCES class_polls(id) ON DELETE CASCADE,
+    INDEX idx_poll_id (poll_id)
+);
+
+-- 班级投票记录表
+CREATE TABLE IF NOT EXISTS class_poll_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_vote (poll_id, user_id),
+    FOREIGN KEY (poll_id) REFERENCES class_polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (option_id) REFERENCES class_poll_options(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_poll_id (poll_id),
+    INDEX idx_user_id (user_id)
+);
+
+-- 草稿箱表
+CREATE TABLE IF NOT EXISTS drafts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT,
+    topic_id INT DEFAULT NULL,
+    images JSON DEFAULT NULL COMMENT '图片JSON数组',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_updated_at (updated_at)
+);
 
 -- 相册表
 CREATE TABLE IF NOT EXISTS albums (
