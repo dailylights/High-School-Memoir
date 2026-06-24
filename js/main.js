@@ -1,4 +1,37 @@
 const API_BASE = 'api/';
+let csrfToken = '';
+
+function setCSRFToken(token) {
+    if (token) {
+        csrfToken = token;
+        localStorage.setItem('csrf_token', token);
+    }
+}
+
+function getCSRFToken() {
+    return csrfToken || localStorage.getItem('csrf_token') || '';
+}
+
+async function apiFetch(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : API_BASE + endpoint;
+    const token = getCSRFToken();
+    
+    if (token) {
+        if (!options.headers) {
+            options.headers = {};
+        }
+        options.headers['X-CSRF-Token'] = token;
+    }
+    
+    const response = await fetch(url, options);
+    
+    const newToken = response.headers.get('X-CSRF-Token');
+    if (newToken) {
+        setCSRFToken(newToken);
+    }
+    
+    return response;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     const isInstallPage = window.location.pathname.endsWith('install.html');
@@ -145,9 +178,9 @@ function getAvatarHtml(userOrName, size = '40px', fontSize = '1rem') {
     }
     
     if (avatar) {
-        return `<img src="${avatar}" class="user-avatar-img" style="width: ${size}; height: ${size};">`;
+        return `<img src="${escapeHtml(avatar)}" class="user-avatar-img" style="width: ${size}; height: ${size};">`;
     } else {
-        return `<div class="avatar-placeholder" style="width: ${size}; height: ${size}; font-size: ${fontSize};">${name[0]}</div>`;
+        return `<div class="avatar-placeholder" style="width: ${size}; height: ${size}; font-size: ${fontSize};">${escapeHtml(name[0] || '?')}</div>`;
     }
 }
 
@@ -157,6 +190,10 @@ async function checkSession() {
         formData.append('action', 'check_session');
         const res = await fetch(API_BASE + 'auth.php', { method: 'POST', body: formData });
         const data = await res.json();
+        
+        if (data.csrf_token) {
+            setCSRFToken(data.csrf_token);
+        }
         
         const navAuth = document.getElementById('nav-auth');
         const profileSidebar = document.getElementById('profile-sidebar');
@@ -359,13 +396,13 @@ async function loadMemoirs(search = '', userId = 0, topicId = 0, page = 1) {
                 
                 const likeClass = memoir.is_liked > 0 ? 'active' : '';
                 
-                const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${memoir.topic_name}</span>` : '';
+                const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${escapeHtml(memoir.topic_name)}</span>` : '';
                 
                 card.innerHTML = `
                     <div class="post-header">
                         <div style="margin-right: 10px;">${getAvatarHtml({name: memoir.author_name, avatar: memoir.author_avatar}, '40px')}</div>
                         <div class="post-info">
-                            <h4>${memoir.author_name} <span style="font-weight:normal; font-size: 0.8rem;">(${memoir.author_class})</span></h4>
+                            <h4>${escapeHtml(memoir.author_name)} <span style="font-weight:normal; font-size: 0.8rem;">(${escapeHtml(memoir.author_class)})</span></h4>
                             <span>${new Date(memoir.created_at).toLocaleString()}</span>
                         </div>
                         ${deleteBtn}
@@ -811,12 +848,12 @@ async function loadComments(memoirId) {
         data.comments.forEach(c => {
             const div = document.createElement('div');
             div.className = 'comment';
-            let imgHtml = c.image ? `<br><img src="${c.image}" style="max-width: 100px; max-height: 100px; margin-top: 5px; border-radius: 4px;">` : '';
+            let imgHtml = c.image ? `<br><img src="${escapeHtml(c.image)}" style="max-width: 100px; max-height: 100px; margin-top: 5px; border-radius: 4px;">` : '';
             div.innerHTML = `
                 <div style="margin-right: 10px;">${getAvatarHtml({name: c.author_name, avatar: c.author_avatar}, '30px', '0.8rem')}</div>
                 <div class="comment-content">
-                    <div class="comment-author">${c.author_name}</div>
-                    <div class="comment-text">${c.content}${imgHtml}</div>
+                    <div class="comment-author">${escapeHtml(c.author_name)}</div>
+                    <div class="comment-text">${escapeHtml(c.content)}${imgHtml}</div>
                 </div>
             `;
             list.appendChild(div);
@@ -882,8 +919,8 @@ async function loadPopular() {
                 const div = document.createElement('div');
                 div.className = 'popular-item';
                 div.innerHTML = `
-                    <div class="popular-title"><a href="#" onclick="alert('请在主列表中搜索查看完整内容')">${m.content}</a></div>
-                    <div class="popular-meta">by ${m.author_name} · ${m.likes_count} likes</div>
+                    <div class="popular-title"><a href="#" onclick="alert('请在主列表中搜索查看完整内容')">${escapeHtml(m.content)}</a></div>
+                    <div class="popular-meta">by ${escapeHtml(m.author_name)} · ${m.likes_count} likes</div>
                 `;
                 list.appendChild(div);
             });
@@ -946,7 +983,7 @@ async function loadTopicRanking() {
                 div.innerHTML = `
                     <div style="font-weight: 500;">
                         <span style="color: ${rankColor}; margin-right: 5px; font-weight: bold;">${index + 1}</span>
-                        #${t.name}
+                        #${escapeHtml(t.name)}
                     </div>
                     <div style="font-size: 0.8rem; color: #888;">${t.usage_count}</div>
                 `;
@@ -980,8 +1017,10 @@ async function loadAnnouncements() {
                 div.style.marginBottom = '15px';
                 div.style.paddingBottom = '10px';
                 div.style.borderBottom = '1px solid #f0f0f0';
+                const titleHtml = a.title ? `<div style="font-weight: 600; margin-bottom: 5px;">${escapeHtml(a.title)}</div>` : '';
                 div.innerHTML = `
-                    <div style="font-size: 0.95rem; white-space: pre-wrap;">${a.content}</div>
+                    ${titleHtml}
+                    <div style="font-size: 0.95rem; white-space: pre-wrap;">${escapeHtml(a.content)}</div>
                     <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">${new Date(a.created_at).toLocaleDateString()}</div>
                 `;
                 list.appendChild(div);
@@ -1069,9 +1108,10 @@ async function loadNotificationsList(page = 1) {
                 const div = document.createElement('div');
                 div.className = 'notification-list-item';
                 const actionText = notification.type === 'like' ? '赞了你的回忆' : '评论了你的回忆';
+                const preview = notification.memoir_preview ? notification.memoir_preview.substring(0, 100) + (notification.memoir_preview.length > 100 ? '...' : '') : '';
                 div.innerHTML = `
-                    <div style="font-size: 0.95rem; margin-bottom: 5px;"><strong>${notification.actor_name}</strong> ${actionText}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px; line-height: 1.4; border-left: 3px solid #e9ecef; padding-left: 10px;">"${notification.memoir_preview.substring(0, 100)}${notification.memoir_preview.length > 100 ? '...' : ''}"</div>
+                    <div style="font-size: 0.95rem; margin-bottom: 5px;"><strong>${escapeHtml(notification.actor_name)}</strong> ${actionText}</div>
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px; line-height: 1.4; border-left: 3px solid #e9ecef; padding-left: 10px;">"${escapeHtml(preview)}"</div>
                     <div style="font-size: 0.75rem; color: #999;">${new Date(notification.created_at).toLocaleString()}</div>
                 `;
                 list.appendChild(div);

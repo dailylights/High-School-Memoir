@@ -235,6 +235,7 @@ if ($action == 'check_install') {
         }
         
         if (password_verify($password, $user['password'])) {
+            session_regenerate_id(true);
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['is_admin'] = true;

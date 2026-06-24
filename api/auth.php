@@ -175,6 +175,7 @@ if ($action == 'register') {
     }
     
     if ($loginSuccess) {
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $userData['id'];
         $_SESSION['user_name'] = $userData['name'];
         $_SESSION['last_activity'] = time();
@@ -205,13 +206,13 @@ if ($action == 'register') {
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res->num_rows > 0) {
-            echo json_encode(["success" => true, "user" => $res->fetch_assoc()]);
+            echo json_encode(["success" => true, "user" => $res->fetch_assoc(), "csrf_token" => getCSRFToken()]);
         } else {
             session_destroy();
-            echo json_encode(["success" => false]);
+            echo json_encode(["success" => false, "csrf_token" => getCSRFToken()]);
         }
     } else {
-        echo json_encode(["success" => false]);
+        echo json_encode(["success" => false, "csrf_token" => getCSRFToken()]);
     }
 
 } elseif ($action == 'get_public_config') {
@@ -226,7 +227,7 @@ if ($action == 'register') {
         $installed = $result->fetch_assoc()['config_value'] == '1';
     }
     $configs['site_installed'] = $installed;
-    echo json_encode(["success" => true, "configs" => $configs]);
+    echo json_encode(["success" => true, "configs" => $configs, "csrf_token" => getCSRFToken()]);
 } elseif ($action == 'recover') {
     $username = trim($_POST['username'] ?? '');
     $phone = trim($_POST['phone'] ?? '');

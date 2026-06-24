@@ -222,7 +222,7 @@ async function loadExportPreview() {
                     <div class="preview-title">${escapeHtml(m.content.substring(0, 50) + (m.content.length > 50 ? '...' : ''))}</div>
                     <div class="preview-meta">
                         ${new Date(m.created_at).toLocaleDateString()}
-                        ${m.topic_name ? ` · #${m.topic_name}` : ''}
+                        ${m.topic_name ? ` · #${escapeHtml(m.topic_name)}` : ''}
                         ${m.images && m.images.length > 0 ? ` · 📷 ${m.images.length}张图` : ''}
                     </div>
                 </div>
