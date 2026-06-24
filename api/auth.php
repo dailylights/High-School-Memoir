@@ -23,6 +23,39 @@ function getSiteConfig($key, $default = null) {
     return $default;
 }
 
+function recordLoginAttempt($ip, $username, $success) {
+    global $conn;
+    $stmt = $conn->prepare("INSERT INTO login_attempts (ip_address, username, success) VALUES (?, ?, ?)");
+    $successInt = $success ? 1 : 0;
+    $stmt->bind_param("ssi", $ip, $username, $successInt);
+    $stmt->execute();
+}
+
+function checkLoginAttempts($ip, $username) {
+    global $conn;
+    $maxAttempts = getSiteConfig('login_max_attempts', 5);
+    $lockoutTime = getSiteConfig('login_lockout_time', 15) * 60;
+    
+    $windowStart = date('Y-m-d H:i:s', time() - $lockoutTime);
+    
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM login_attempts WHERE ip_address = ? AND username = ? AND success = 0 AND attempt_time > ?");
+    $stmt->bind_param("sss", $ip, $username, $windowStart);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $count = $result->fetch_assoc()['count'];
+    
+    return $count >= $maxAttempts;
+}
+
+function getClientIp() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+}
+
 if ($action == 'register') {
     $allowRegister = getSiteConfig('allow_register', true);
     if (!$allowRegister) {
@@ -57,18 +90,25 @@ if ($action == 'register') {
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "注册成功"]);
     } else {
-        echo json_encode(["success" => false, "message" => "注册失败: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "注册失败，用户名可能已存在"]);
     }
 } elseif ($action == 'login') {
-    $username = $_POST['username'] ?? '';
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
+    $ip = getClientIp();
 
     if (empty($username) || empty($password)) {
         echo json_encode(["success" => false, "message" => "请输入用户名和密码"]);
         exit;
     }
 
-    $stmt = $conn->prepare("SELECT id, password, name, class, phone FROM users WHERE username = ?");
+    if (checkLoginAttempts($ip, $username)) {
+        $lockoutTime = getSiteConfig('login_lockout_time', 15);
+        echo json_encode(["success" => false, "message" => "登录失败次数过多，请{$lockoutTime}分钟后再试"]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT id, password, name, class, phone, is_admin FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -79,12 +119,15 @@ if ($action == 'register') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['last_activity'] = time();
+            recordLoginAttempt($ip, $username, true);
             unset($user['password']);
             echo json_encode(["success" => true, "message" => "登录成功", "user" => $user]);
         } else {
+            recordLoginAttempt($ip, $username, false);
             echo json_encode(["success" => false, "message" => "密码错误"]);
         }
     } else {
+        recordLoginAttempt($ip, $username, false);
         echo json_encode(["success" => false, "message" => "用户不存在"]);
     }
 } elseif ($action == 'logout') {

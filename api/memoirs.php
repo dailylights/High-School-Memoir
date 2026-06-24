@@ -193,47 +193,64 @@ if ($action == 'create') {
         }
     }
 
-    $image_paths = [];
-    if ($hasImages) {
-        $total = count($_FILES['images']['name']);
-        for ($i = 0; $i < $total; $i++) {
-            if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
-                $filename = uniqid() . "_" . $_FILES['images']['name'][$i];
-                $newFilePath = "../uploads/" . $filename;
-                if (move_uploaded_file($_FILES['images']['tmp_name'][$i], $newFilePath)) {
-                    $image_paths[] = "uploads/" . $filename;
-                }
-            }
-        }
-    }
-
-    $images_json = json_encode($image_paths);
-
-    $stmt = $conn->prepare("INSERT INTO memoirs (user_id, content, images, topic_id) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("issi", $user_id, $content, $images_json, $topic_id);
+    $stmt = $conn->prepare("INSERT INTO memoirs (user_id, content, images, topic_id) VALUES (?, ?, '[]', ?)");
+    $stmt->bind_param("iss", $user_id, $content, $topic_id);
 
     if ($stmt->execute()) {
         $memoir_id = $conn->insert_id;
         
+        $image_paths = [];
         $uploadedMedia = 0;
+        
+        if ($hasImages) {
+            $total = count($_FILES['images']['name']);
+            for ($i = 0; $i < $total; $i++) {
+                if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $_FILES['images']['name'][$i],
+                        'type' => $_FILES['images']['type'][$i],
+                        'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                        'error' => $_FILES['images']['error'][$i],
+                        'size' => $_FILES['images']['size'][$i]
+                    ];
+                    
+                    $validation = validateMediaFile($file, 'image');
+                    if ($validation['valid']) {
+                        $upload = uploadMediaFile($file, 'image', $user_id, $memoir_id);
+                        if ($upload['success']) {
+                            $image_paths[] = $upload['path'];
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!empty($image_paths)) {
+            $images_json = json_encode($image_paths);
+            $updateStmt = $conn->prepare("UPDATE memoirs SET images = ? WHERE id = ?");
+            $updateStmt->bind_param("si", $images_json, $memoir_id);
+            $updateStmt->execute();
+        }
         
         if ($hasVideos) {
             $total = count($_FILES['videos']['name']);
             for ($i = 0; $i < $total; $i++) {
-                $file = [
-                    'name' => $_FILES['videos']['name'][$i],
-                    'type' => $_FILES['videos']['type'][$i],
-                    'tmp_name' => $_FILES['videos']['tmp_name'][$i],
-                    'error' => $_FILES['videos']['error'][$i],
-                    'size' => $_FILES['videos']['size'][$i]
-                ];
-                
-                $validation = validateMediaFile($file, 'video');
-                if ($validation['valid']) {
-                    $upload = uploadMediaFile($file, 'video', $user_id, $memoir_id);
-                    if ($upload['success']) {
-                        saveMediaToDB($conn, $memoir_id, $user_id, 'video', $upload['path'], $upload['size']);
-                        $uploadedMedia++;
+                if ($_FILES['videos']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $_FILES['videos']['name'][$i],
+                        'type' => $_FILES['videos']['type'][$i],
+                        'tmp_name' => $_FILES['videos']['tmp_name'][$i],
+                        'error' => $_FILES['videos']['error'][$i],
+                        'size' => $_FILES['videos']['size'][$i]
+                    ];
+                    
+                    $validation = validateMediaFile($file, 'video');
+                    if ($validation['valid']) {
+                        $upload = uploadMediaFile($file, 'video', $user_id, $memoir_id);
+                        if ($upload['success']) {
+                            saveMediaToDB($conn, $memoir_id, $user_id, 'video', $upload['path'], $upload['size']);
+                            $uploadedMedia++;
+                        }
                     }
                 }
             }
@@ -242,20 +259,22 @@ if ($action == 'create') {
         if ($hasAudios) {
             $total = count($_FILES['audios']['name']);
             for ($i = 0; $i < $total; $i++) {
-                $file = [
-                    'name' => $_FILES['audios']['name'][$i],
-                    'type' => $_FILES['audios']['type'][$i],
-                    'tmp_name' => $_FILES['audios']['tmp_name'][$i],
-                    'error' => $_FILES['audios']['error'][$i],
-                    'size' => $_FILES['audios']['size'][$i]
-                ];
-                
-                $validation = validateMediaFile($file, 'audio');
-                if ($validation['valid']) {
-                    $upload = uploadMediaFile($file, 'audio', $user_id, $memoir_id);
-                    if ($upload['success']) {
-                        saveMediaToDB($conn, $memoir_id, $user_id, 'audio', $upload['path'], $upload['size']);
-                        $uploadedMedia++;
+                if ($_FILES['audios']['error'][$i] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $_FILES['audios']['name'][$i],
+                        'type' => $_FILES['audios']['type'][$i],
+                        'tmp_name' => $_FILES['audios']['tmp_name'][$i],
+                        'error' => $_FILES['audios']['error'][$i],
+                        'size' => $_FILES['audios']['size'][$i]
+                    ];
+                    
+                    $validation = validateMediaFile($file, 'audio');
+                    if ($validation['valid']) {
+                        $upload = uploadMediaFile($file, 'audio', $user_id, $memoir_id);
+                        if ($upload['success']) {
+                            saveMediaToDB($conn, $memoir_id, $user_id, 'audio', $upload['path'], $upload['size']);
+                            $uploadedMedia++;
+                        }
                     }
                 }
             }
@@ -267,7 +286,7 @@ if ($action == 'create') {
         
         echo json_encode(["success" => true, "message" => "发布成功", "memoir_id" => $memoir_id]);
     } else {
-        echo json_encode(["success" => false, "message" => "发布失败: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "发布失败"]);
     }
 
 } elseif ($action == 'list') {
@@ -377,7 +396,7 @@ if ($action == 'create') {
     $result = $conn->query($sql);
     
     if (!$result) {
-        echo json_encode(["success" => false, "message" => "查询失败: " . $conn->error]);
+        echo json_encode(["success" => false, "message" => "查询失败"]);
         exit;
     }
 

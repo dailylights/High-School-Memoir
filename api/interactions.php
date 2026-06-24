@@ -10,6 +10,18 @@ if (!isset($_SESSION['user_id']) && $action != 'get_comments') {
 
 $current_user_id = $_SESSION['user_id'] ?? 0;
 
+function isCurrentUserAdmin($conn, $userId) {
+    if (!$userId) return false;
+    $stmt = $conn->prepare("SELECT is_admin FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc()['is_admin'] == 1;
+    }
+    return false;
+}
+
 if ($action == 'toggle_like') {
     $memoir_id = $_POST['memoir_id'] ?? 0;
     
@@ -32,41 +44,78 @@ if ($action == 'toggle_like') {
     }
 
 } elseif ($action == 'add_comment') {
-    $memoir_id = $_POST['memoir_id'] ?? 0;
-    $content = $_POST['content'] ?? '';
+    $memoir_id = intval($_POST['memoir_id'] ?? 0);
+    $content = trim($_POST['content'] ?? '');
+    
+    if ($memoir_id <= 0) {
+        echo json_encode(["success" => false, "message" => "无效的回忆录ID"]);
+        exit;
+    }
     
     $image_path = null;
     if (!empty($_FILES['image']['name'])) {
-        $filename = uniqid() . "_" . $_FILES['image']['name'];
-        $newFilePath = "../uploads/" . $filename;
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $newFilePath)) {
-            $image_path = "uploads/" . $filename;
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $maxSize = 5 * 1024 * 1024;
+        
+        $file = $_FILES['image'];
+        
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(["success" => false, "message" => "文件上传失败"]);
+            exit;
+        }
+        
+        if ($file['size'] > $maxSize) {
+            echo json_encode(["success" => false, "message" => "图片大小不能超过5MB"]);
+            exit;
+        }
+        
+        $fileType = $file['type'];
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        if (!in_array($fileType, $allowedTypes) || !in_array($extension, $allowedExts)) {
+            echo json_encode(["success" => false, "message" => "不支持的图片格式"]);
+            exit;
+        }
+        
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if (!$imageInfo || !in_array($imageInfo['mime'], $allowedTypes)) {
+            echo json_encode(["success" => false, "message" => "不是有效的图片文件"]);
+            exit;
+        }
+        
+        $uploadDir = "../uploads/comments/";
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $newFilename = "comment_" . $current_user_id . "_" . time() . "_" . bin2hex(random_bytes(8)) . "." . $extension;
+        $targetPath = $uploadDir . $newFilename;
+        
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            @chmod($targetPath, 0644);
+            $image_path = "uploads/comments/" . $newFilename;
+        } else {
+            echo json_encode(["success" => false, "message" => "图片保存失败"]);
+            exit;
         }
     }
 
-    if (empty($content) && empty($image_path)) {
-        // 如果没有内容且没有图片，则返回错误
-        // 但注意：content 可能是 '0' 或其他假值，empty() 对 '0' 返回 true
-        // 应该用 strlen() > 0 或其他方式判断
-        // 不过这里 content 预期是字符串。
-        // 让我们放宽一点：只要有一个存在就行。
+    if (strlen($content) === 0 && empty($image_path)) {
         echo json_encode(["success" => false, "message" => "评论内容不能为空"]);
+        exit;
+    }
+    
+    if (strlen($content) > 2000) {
+        echo json_encode(["success" => false, "message" => "评论内容过长"]);
         exit;
     }
 
     $stmt = $conn->prepare("INSERT INTO comments (memoir_id, user_id, content, image) VALUES (?, ?, ?, ?)");
-    // 确保 content 即使是空字符串也能正确插入
-    // image_path 如果是 null，bind_param 怎么处理？
-    // bind_param 不支持 null 直接传，需要变量引用。
-    // 更好的方式：动态构建 SQL 或者手动处理 null。
-    // 但是这里 'ss' 类型，如果是 null 会被转为空字符串吗？不，mysqli 会报错或行为不一致。
-    
-    // 修正：如果 image_path 是 null，我们应该在 SQL 中处理，或者确保传入 null 值
-    // mysqli bind_param 中，null 值是可以的，只要变量是 null。
     $stmt->bind_param("iiss", $memoir_id, $current_user_id, $content, $image_path);
     
     if ($stmt->execute()) {
-        echo json_encode(["success" => true, "message" => "评论成功"]);
+        echo json_encode(["success" => true, "message" => "评论成功", "comment_id" => $conn->insert_id]);
     } else {
         echo json_encode(["success" => false, "message" => "评论失败"]);
     }
@@ -89,6 +138,53 @@ if ($action == 'toggle_like') {
     }
     
     echo json_encode(["success" => true, "comments" => $comments]);
+
+} elseif ($action == 'delete_comment') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(["success" => false, "message" => "请先登录"]);
+        exit;
+    }
+    
+    $comment_id = intval($_POST['comment_id'] ?? 0);
+    
+    if ($comment_id <= 0) {
+        echo json_encode(["success" => false, "message" => "无效的评论ID"]);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("SELECT user_id, image FROM comments WHERE id = ?");
+    $stmt->bind_param("i", $comment_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        echo json_encode(["success" => false, "message" => "评论不存在"]);
+        exit;
+    }
+    
+    $comment = $result->fetch_assoc();
+    $isAdmin = isCurrentUserAdmin($conn, $current_user_id);
+    
+    if ($comment['user_id'] != $current_user_id && !$isAdmin) {
+        echo json_encode(["success" => false, "message" => "无权删除此评论"]);
+        exit;
+    }
+    
+    if (!empty($comment['image'])) {
+        $imgPath = "../" . $comment['image'];
+        if (file_exists($imgPath)) {
+            @unlink($imgPath);
+        }
+    }
+    
+    $deleteStmt = $conn->prepare("DELETE FROM comments WHERE id = ?");
+    $deleteStmt->bind_param("i", $comment_id);
+    
+    if ($deleteStmt->execute()) {
+        echo json_encode(["success" => true, "message" => "删除成功"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "删除失败"]);
+    }
 
 } elseif ($action == 'get_notifications') {
     if (!isset($_SESSION['user_id'])) {

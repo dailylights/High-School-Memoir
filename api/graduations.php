@@ -7,6 +7,18 @@ function getUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
+function isUserAdmin($conn, $userId) {
+    if (!$userId) return false;
+    $stmt = $conn->prepare("SELECT is_admin FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc()['is_admin'] == 1;
+    }
+    return false;
+}
+
 function updateGraduationClassCount($conn, $graduationId) {
     $countStmt = $conn->prepare("SELECT COUNT(*) as count FROM classes WHERE graduation_id = ?");
     $countStmt->bind_param("i", $graduationId);
@@ -49,7 +61,7 @@ function createGraduation($conn, $userId, $year, $name, $description) {
         return ['success' => true, 'graduation_id' => $conn->insert_id];
     }
     
-    return ['success' => false, 'message' => '创建届别失败: ' . $conn->error];
+    return ['success' => false, 'message' => '创建届别失败'];
 }
 
 function getGraduationList($conn, $page = 1, $limit = 20) {
@@ -163,7 +175,7 @@ function updateGraduation($conn, $userId, $graduationId, $name, $description) {
         return ['success' => true, 'message' => '更新成功'];
     }
     
-    return ['success' => false, 'message' => '更新失败: ' . $conn->error];
+    return ['success' => false, 'message' => '更新失败'];
 }
 
 function deleteGraduation($conn, $userId, $graduationId) {
@@ -268,7 +280,7 @@ function setClassGraduation($conn, $userId, $classId, $graduationId) {
         return ['success' => true, 'message' => '设置成功'];
     }
     
-    return ['success' => false, 'message' => '设置失败: ' . $conn->error];
+    return ['success' => false, 'message' => '设置失败'];
 }
 
 if ($action == 'list') {
@@ -289,6 +301,11 @@ if ($action == 'list') {
     }
     
     $userId = $_SESSION['user_id'];
+    if (!isUserAdmin($conn, $userId)) {
+        echo json_encode(['success' => false, 'message' => '仅管理员可创建届别']);
+        exit;
+    }
+    
     $year = intval($_POST['year'] ?? 0);
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
@@ -303,6 +320,11 @@ if ($action == 'list') {
     }
     
     $userId = $_SESSION['user_id'];
+    if (!isUserAdmin($conn, $userId)) {
+        echo json_encode(['success' => false, 'message' => '仅管理员可修改届别']);
+        exit;
+    }
+    
     $graduationId = intval($_POST['id'] ?? 0);
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
@@ -317,6 +339,11 @@ if ($action == 'list') {
     }
     
     $userId = $_SESSION['user_id'];
+    if (!isUserAdmin($conn, $userId)) {
+        echo json_encode(['success' => false, 'message' => '仅管理员可删除届别']);
+        exit;
+    }
+    
     $graduationId = intval($_POST['id'] ?? 0);
     
     $result = deleteGraduation($conn, $userId, $graduationId);

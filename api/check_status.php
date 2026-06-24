@@ -1,14 +1,25 @@
 <?php
 require 'db.php';
 
-$tables = [];
-$result = $conn->query("SHOW TABLES");
-if ($result) {
-    while ($row = $result->fetch_array()) {
-        $tables[] = $row[0];
+header("Content-Type: application/json; charset=UTF-8");
+
+$dbOk = false;
+$dbMessage = "数据库连接正常";
+
+if ($conn) {
+    $result = @$conn->query("SELECT 1");
+    if ($result) {
+        $dbOk = true;
+    } else {
+        $dbMessage = "数据库查询失败";
     }
-    echo json_encode(["success" => true, "message" => "数据库连接正常", "tables" => $tables]);
 } else {
-    echo json_encode(["success" => false, "message" => "无法读取表: " . $conn->error]);
+    $dbMessage = "数据库连接失败";
 }
+
+echo json_encode([
+    "success" => true,
+    "status" => $dbOk ? "ok" : "error",
+    "message" => $dbMessage
+]);
 ?>
