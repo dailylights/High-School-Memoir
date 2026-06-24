@@ -281,3 +281,18 @@ CREATE TABLE IF NOT EXISTS hot_searches (
     INDEX idx_search_count (search_count),
     INDEX idx_last_search (last_search_at)
 );
+
+-- 用户关系表（关注系统）
+CREATE TABLE IF NOT EXISTS follows (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    follower_id INT NOT NULL COMMENT '关注者',
+    following_id INT NOT NULL COMMENT '被关注者',
+    is_special TINYINT(1) DEFAULT 0 COMMENT '是否特别关注',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_follow (follower_id, following_id),
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_follower_id (follower_id),
+    INDEX idx_following_id (following_id),
+    INDEX idx_is_special (is_special)
+);

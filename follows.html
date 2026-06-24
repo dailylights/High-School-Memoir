@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关注列表 - 高中回忆录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f6fa 0%, #dfe6e9 100%);
+            min-height: 100vh;
+        }
+
+        .follows-page-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        .page-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Tabs */
+        .follows-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 8px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #636e72;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.35);
+        }
+
+        .tab-btn .count {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .tab-btn:not(.active) .count {
+            background: #e9ecef;
+            color: #636e72;
+        }
+
+        /* Users Card */
+        .users-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f2f6;
+        }
+
+        .users-header h3 {
+            font-size: 1rem;
+            color: #2d3436;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* User Item */
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .user-item:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .special-badge {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .user-meta {
+            font-size: 0.85rem;
+            color: #636e72;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+            color: #a29bfe;
+            margin-top: 6px;
+        }
+
+        .user-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Action Buttons */
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .follow-btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .follow-btn.following {
+            background: #f1f2f6;
+            color: #636e72;
+        }
+
+        .follow-btn.following:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .follow-btn.not-following {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .follow-btn.not-following:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .special-btn {
+            padding: 10px 12px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #f1f2f6;
+            background: white;
+            color: #636e72;
+        }
+
+        .special-btn:hover {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        .special-btn.active {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+            border-color: transparent;
+            color: white;
+        }
+
+        /* Loading, Empty, Error States */
+        .loading-state,
+        .empty-state,
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-state .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e9ecef;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h4 {
+            font-size: 1.2rem;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            color: #a29bfe;
+        }
+
+        /* Pagination */
+        .follows-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f2f6;
+        }
+
+        .page-btn {
+            min-width: 40px;
+            height: 40px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #636e72;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-color: transparent;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            background: #f8f9fa;
+            color: #dfe6e9;
+            cursor: not-allowed;
+        }
+
+        /* Special Only Toggle */
+        .special-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .toggle-label {
+            font-size: 0.9rem;
+            color: #636e72;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .user-item {
+                flex-wrap: wrap;
+            }
+
+            .user-actions {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 10px;
+            }
+
+            .follows-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><a href="index.html">High School Memoir</a></div>
+        <div class="nav-links" id="nav-auth">
+            <a href="index.html" class="nav-item">首页</a>
+            <a href="login.html" class="nav-item">登录</a>
+            <a href="register.html" class="btn btn-primary">注册</a>
+        </div>
+    </nav>
+
+    <div class="follows-page-wrapper">
+        <div class="page-header">
+            <h1 id="page-title">关注列表</h1>
+            <p id="page-description">查看关注的人</p>
+            <a href="javascript:history.back()" class="back-link">← 返回</a>
+        </div>
+
+        <div class="follows-tabs">
+            <button class="tab-btn active" data-type="following" onclick="switchTab('following')">
+                <span>👥</span> 关注 <span class="count" id="following-count">0</span>
+            </button>
+            <button class="tab-btn" data-type="followers" onclick="switchTab('followers')">
+                <span>⭐</span> 粉丝 <span class="count" id="followers-count">0</span>
+            </button>
+        </div>
+
+        <div class="users-card" id="users-card">
+            <div class="users-header">
+                <h3 id="list-title">
+                    <span>👥</span> 关注的人
+                </h3>
+                <div class="special-toggle" id="special-toggle" style="display: none;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="special-only-checkbox" onchange="toggleSpecialOnly()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">🔥 特别关注</span>
+                </div>
+            </div>
+
+            <div class="users-list" id="users-list">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <div class="follows-pagination" id="pagination" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // State
+        let currentTab = 'following';
+        let currentPage = 1;
+        let targetUserId = 0;
+        let isOwnProfile = false;
+        let followingList = [];
+        let followersList = [];
+        let specialOnly = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get user ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            targetUserId = parseInt(urlParams.get('user_id') || '0');
+            
+            if (!targetUserId) {
+                showError('无效的用户ID');
+                return;
+            }
+
+            // Wait for main.js checkSession to complete
+            const waitForSession = () => {
+                return new Promise((resolve) => {
+                    const checkExist = setInterval(() => {
+                        if (typeof currentUser !== 'undefined') {
+                            clearInterval(checkExist);
+                            resolve();
+                        }
+                    }, 100);
+                    // Timeout after 3 seconds
+                    setTimeout(() => {
+                        clearInterval(checkExist);
+                        resolve();
+                    }, 3000);
+                });
+            };
+            
+            await waitForSession();
+            
+            isOwnProfile = currentUser && currentUser.id == targetUserId;
+            // Show special toggle only for own profile
+            if (isOwnProfile) {
+                document.getElementById('special-toggle').style.display = 'flex';
+            }
+            
+            await loadUserInfo();
+            await loadCounts();
+            await loadUsers();
+        });
+
+        // Load user info for header (simplified - get from loaded data or skip)
+        async function loadUserInfo() {
+            // User name will be set when we load the users list
+            // This is a simplified approach to avoid extra API calls
+        }
+
+        // Load counts
+        async function loadCounts() {
+            try {
+                const res = await fetch(`${API_BASE}follows.php?action=get_stats&user_id=${targetUserId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('following-count').textContent = data.following_count;
+                    document.getElementById('followers-count').textContent = data.follower_count;
+                }
+            } catch (e) {
+                console.error('Load counts failed', e);
+            }
+        }
+
+        // Switch tab
+        async function switchTab(type) {
+            currentTab = type;
+            currentPage = 1;
+            specialOnly = false;
+            document.getElementById('special-only-checkbox').checked = false;
+            
+            // Update tab UI
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+
+            // Update title
+            const titles = {
+                'following': { icon: '👥', text: '关注的人' },
+                'followers': { icon: '⭐', text: '粉丝' }
+            };
+            document.getElementById('list-title').innerHTML = `
+                <span>${titles[type].icon}</span> ${titles[type].text}
+            `;
+
+            await loadUsers();
+        }
+
+        // Toggle special only
+        async function toggleSpecialOnly() {
+            specialOnly = document.getElementById('special-only-checkbox').checked;
+            currentPage = 1;
+            await loadUsers();
+        }
+
+        // Load users
+        async function loadUsers() {
+            const list = document.getElementById('users-list');
+            const pagination = document.getElementById('pagination');
+            
+            list.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            `;
+            pagination.style.display = 'none';
+
+            try {
+                let endpoint = currentTab === 'following' ? 'get_following' : 'get_followers';
+                let url = `${API_BASE}follows.php?action=${endpoint}&user_id=${targetUserId}&page=${currentPage}&limit=20`;
+                
+                if (currentTab === 'following' && specialOnly) {
+                    url += '&special_only=1';
+                }
+
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.success && data.items.length > 0) {
+                    renderUsers(data.items);
+                    if (data.total_pages > 1) {
+                        renderPagination(data.page, data.total_pages);
+                        pagination.style.display = 'flex';
+                    }
+                } else {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">${currentTab === 'following' ? '👥' : '⭐'}</div>
+                            <h4>${currentTab === 'following' ? '暂无关注' : '暂无粉丝'}</h4>
+                            <p>${currentTab === 'following' ? '快去关注感兴趣的人吧' : '还没有人关注你哦'}</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Load users failed', e);
+                showError('加载失败，请稍后重试');
+            }
+        }
+
+        // Render users
+        function renderUsers(users) {
+            const list = document.getElementById('users-list');
+            list.innerHTML = '';
+
+            if (currentTab === 'following') {
+                followingList = users;
+            } else {
+                followersList = users;
+            }
+
+            users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'user-item';
+                
+                const isSelf = currentUser && currentUser.id == user.id;
+                const isFollowing = currentUser && user.i_follow_him;
+                
+                let followBtnHtml = '';
+                if (!isSelf && currentUser) {
+                    followBtnHtml = `
+                        <button class="follow-btn ${isFollowing ? 'following' : 'not-following'}" 
+                                onclick="toggleFollow(${user.id}, ${isFollowing})">
+                            ${isFollowing ? '已关注' : '关注'}
+                        </button>
+                    `;
+                    
+                    // Special follow button (only if already following)
+                    if (isFollowing) {
+                        followBtnHtml += `
+                            <button class="special-btn ${user.is_special ? 'active' : ''}" 
+                                    onclick="toggleSpecial(${user.id}, ${user.is_special})"
+                                    title="${user.is_special ? '取消特别关注' : '设为特别关注'}">
+                                🔥
+                            </button>
+                        `;
+                    }
+                } else if (!currentUser && !isSelf) {
+                    followBtnHtml = `
+                        <a href="login.html" class="follow-btn not-following">登录后关注</a>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="user-avatar">
+                        ${user.avatar ? `<img src="${escapeHtml(user.avatar)}" alt="">` : escapeHtml(user.name[0] || '?')}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            ${escapeHtml(user.name)}
+                            ${user.is_special ? '<span class="special-badge">特别关注</span>' : ''}
+                        </div>
+                        <div class="user-meta">
+                            <span>@${escapeHtml(user.username || '')}</span>
+                            <span>${escapeHtml(user.class || '')}</span>
+                        </div>
+                        <div class="user-stats">
+                            <span>📝 ${user.memoir_count || 0} 回忆</span>
+                            <span>👥 ${user.follower_count || 0} 粉丝</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        ${followBtnHtml}
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Toggle follow
+        async function toggleFollow(userId, isCurrentlyFollowing) {
+            if (!currentUser) {
+                alert('请先登录');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                
+                const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
+                const res = await fetch(`${API_BASE}follows.php?action=${endpoint}`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRF-Token': getCSRFToken() }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    await loadCounts();
+                    await loadUsers();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error('Toggle follow failed', e);
+                alert('操作失败');
+            }
+        }
+
+        // Toggle special follow
+        async function toggleSpecial(userId, isCurrentlySpecial) {
+            if (!currentUser) {
+                alert('请先登录');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                
+                const res = await fetch(`${API_BASE}follows.php?action=toggle_special`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRF-Token': getCSRFToken() }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    await loadUsers();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                console.error('Toggle special failed', e);
+                alert('操作失败');
+            }
+        }
+
+        // Render pagination
+        function renderPagination(current, total) {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '‹';
+            prevBtn.disabled = current === 1;
+            prevBtn.onclick = () => goToPage(current - 1);
+            container.appendChild(prevBtn);
+
+            const maxVisible = 5;
+            let start = Math.max(1, current - Math.floor(maxVisible / 2));
+            let end = Math.min(total, start + maxVisible - 1);
+            
+            if (end - start + 1 < maxVisible) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+
+            if (start > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => goToPage(1);
+                container.appendChild(firstBtn);
+                
+                if (start > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    container.appendChild(dots);
+                }
+            }
+
+            for (let i = start; i <= end; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (i === current ? ' active' : '');
+                btn.innerText = i;
+                btn.onclick = () => goToPage(i);
+                container.appendChild(btn);
+            }
+
+            if (end < total) {
+                if (end < total - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    container.appendChild(dots);
+                }
+                
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.innerText = total;
+                lastBtn.onclick = () => goToPage(total);
+                container.appendChild(lastBtn);
+            }
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '›';
+            nextBtn.disabled = current === total;
+            nextBtn.onclick = () => goToPage(current + 1);
+            container.appendChild(nextBtn);
+        }
+
+        // Go to page
+        async function goToPage(page) {
+            currentPage = page;
+            await loadUsers();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Show error
+        function showError(message) {
+            const list = document.getElementById('users-list');
+            list.innerHTML = `
+                <div class="error-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h4>出错了</h4>
+                    <p>${escapeHtml(message)}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

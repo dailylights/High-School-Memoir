@@ -44,6 +44,24 @@
                     </div>
                 </form>
             </div>
+
+            <div class="card">
+                <div class="sidebar-title">我的关系</div>
+                <div id="follow-stats" style="display: flex; justify-content: space-around; text-align: center;">
+                    <div style="cursor: pointer;" onclick="window.location.href='follows.html?user_id=' + (currentUser ? currentUser.id : '')">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #6c5ce7;" id="following-count">0</div>
+                        <div style="font-size: 0.85rem; color: #888;">关注</div>
+                    </div>
+                    <div style="cursor: pointer;" onclick="window.location.href='follows.html?user_id=' + (currentUser ? currentUser.id : '') + '&tab=followers'">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #00b894;" id="followers-count">0</div>
+                        <div style="font-size: 0.85rem; color: #888;">粉丝</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #fdcb6e;" id="special-count">0</div>
+                        <div style="font-size: 0.85rem; color: #888;">特别关注</div>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <main>
@@ -74,9 +92,17 @@
 
     <script src="js/main.js"></script>
     <script src="js/export.js"></script>
+    <script src="js/follow.js"></script>
     <script>
-        // Profile specific logic can go here or in main.js
-        // We'll rely on main.js extensions
+        // Initialize follow stats when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for session check to complete
+            setTimeout(() => {
+                if (currentUser) {
+                    initProfileFollowStats();
+                }
+            }, 500);
+        });
     </script>
 </body>
 </html>

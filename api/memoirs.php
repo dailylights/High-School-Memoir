@@ -295,6 +295,8 @@ if ($action == 'create') {
     $search = $_GET['search'] ?? '';
     $filter_user_id = $_GET['user_id'] ?? 0;
     $filter_topic_id = $_GET['topic_id'] ?? 0;
+    $following_only = isset($_GET['following_only']) && $_GET['following_only'] == '1';
+    $special_only = isset($_GET['special_only']) && $_GET['special_only'] == '1';
     $current_user_id = $_SESSION['user_id'] ?? 0;
     
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -304,6 +306,19 @@ if ($action == 'create') {
     $where = "WHERE 1=1";
     $types = "";
     $params = [];
+    
+    // Filter by following users only
+    if ($following_only && $current_user_id > 0) {
+        if ($special_only) {
+            // Only special follows
+            $where .= " AND m.user_id IN (SELECT following_id FROM follows WHERE follower_id = ? AND is_special = 1)";
+        } else {
+            // All follows
+            $where .= " AND m.user_id IN (SELECT following_id FROM follows WHERE follower_id = ?)";
+        }
+        $types .= "i";
+        $params[] = $current_user_id;
+    }
     
     if ($filter_user_id > 0) {
         $where .= " AND m.user_id = ?";

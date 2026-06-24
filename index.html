@@ -48,6 +48,13 @@
 
         <!-- Main Content -->
         <main>
+            <!-- Feed Filter Tabs -->
+            <div class="feed-tabs" id="feed-tabs" style="display: none; margin-bottom: 20px; background: white; padding: 8px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <button class="feed-tab-btn active" data-feed="all" onclick="switchFeed('all')" style="flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #636e72; cursor: pointer; transition: all 0.2s;">📋 全部</button>
+                <button class="feed-tab-btn" data-feed="following" onclick="switchFeed('following')" style="flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #636e72; cursor: pointer; transition: all 0.2s;">👥 关注</button>
+                <button class="feed-tab-btn" data-feed="special" onclick="switchFeed('special')" style="flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #636e72; cursor: pointer; transition: all 0.2s;">🔥 特别关注</button>
+            </div>
+
             <!-- Feed -->
             <div id="memoir-feed">
                 <!-- Populated by JS -->
@@ -57,6 +64,21 @@
             <div id="pagination" class="pagination"></div>
         </main>
     </div>
+
+    <style>
+        .feed-tabs {
+            display: flex;
+            gap: 5px;
+        }
+        .feed-tab-btn:hover {
+            background: #f1f2f6 !important;
+            color: #6c5ce7 !important;
+        }
+        .feed-tab-btn.active {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+            color: white !important;
+        }
+    </style>
 
     <!-- Create Post Modal -->
     <div class="modal-overlay" id="post-modal">
@@ -96,5 +118,168 @@
 
     <script src="js/main.js"></script>
     <script src="js/export.js"></script>
+    <script src="js/follow.js"></script>
+    <script>
+        // Feed state
+        let currentFeedType = 'all';
+        
+        // Initialize feed tabs visibility based on login status
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const feedTabs = document.getElementById('feed-tabs');
+                if (currentUser && feedTabs) {
+                    feedTabs.style.display = 'flex';
+                }
+            }, 600);
+        });
+        
+        // Switch feed type
+        async function switchFeed(type) {
+            currentFeedType = type;
+            
+            // Update tab UI
+            document.querySelectorAll('.feed-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.feed === type);
+            });
+            
+            // Reload memoirs
+            currentPage = 1;
+            currentFilters = {
+                search: '',
+                userId: 0,
+                topicId: 0
+            };
+            
+            let url;
+            if (type === 'following') {
+                url = `${API_BASE}memoirs.php?action=list&following_only=1&page=${currentPage}&limit=5`;
+            } else if (type === 'special') {
+                url = `${API_BASE}memoirs.php?action=list&following_only=1&special_only=1&page=${currentPage}&limit=5`;
+            } else {
+                url = `${API_BASE}memoirs.php?action=list&page=${currentPage}&limit=5`;
+            }
+            
+            const feed = document.getElementById('memoir-feed');
+            feed.innerHTML = '<div style="text-align:center; padding: 20px;">加载中...</div>';
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (data.success) {
+                    feed.innerHTML = '';
+                    if (data.memoirs.length === 0) {
+                        feed.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">暂无动态</div>';
+                        return;
+                    }
+                    
+                    data.memoirs.forEach(memoir => {
+                        const card = createMemoirCard(memoir);
+                        feed.appendChild(card);
+                    });
+                    
+                    renderPagination(data.pagination);
+                }
+            } catch (e) {
+                console.error('Load feed failed', e);
+                feed.innerHTML = '<div style="text-align:center; padding: 20px; color: red;">加载失败</div>';
+            }
+        }
+        
+        // Create memoir card element
+        function createMemoirCard(memoir) {
+            const card = document.createElement('div');
+            card.className = 'card memoir-post';
+            
+            let imagesHtml = '';
+            if (memoir.images && memoir.images.length > 0) {
+                imagesHtml = '<div class="post-images">';
+                memoir.images.forEach(img => {
+                    imagesHtml += `<img src="${img}" onclick="window.open('${img}', '_blank')">`;
+                });
+                imagesHtml += '</div>';
+            }
+            
+            let mediaHtml = '';
+            if (memoir.media && memoir.media.length > 0) {
+                memoir.media.forEach(media => {
+                    if (media.media_type === 'video') {
+                        mediaHtml += `
+                            <div style="margin: 10px 0; border-radius: 8px; overflow: hidden; background: #000;">
+                                <video controls style="width: 100%; max-height: 400px;" preload="metadata">
+                                    <source src="${media.file_path}">
+                                    您的浏览器不支持视频播放
+                                </video>
+                            </div>
+                        `;
+                    } else if (media.media_type === 'audio') {
+                        mediaHtml += `
+                            <div style="margin: 10px 0; padding: 15px; background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius: 12px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                    <div style="font-size: 1.5rem;">🎵</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; font-size: 0.9rem;">音频回忆</div>
+                                        <div style="font-size: 0.75rem; color: #e65100;">${(media.file_size / 1024 / 1024).toFixed(1)} MB</div>
+                                    </div>
+                                </div>
+                                <audio controls style="width: 100%;">
+                                    <source src="${media.file_path}">
+                                    您的浏览器不支持音频播放
+                                </audio>
+                            </div>
+                        `;
+                    } else if (media.media_type === 'image') {
+                        imagesHtml = imagesHtml || '<div class="post-images">';
+                        imagesHtml += `<img src="${media.file_path}" onclick="window.open('${media.file_path}', '_blank')">`;
+                    }
+                });
+                if (imagesHtml && !imagesHtml.endsWith('</div>')) {
+                    imagesHtml += '</div>';
+                }
+            }
+            
+            const deleteBtn = (currentUser && currentUser.id == memoir.user_id) 
+                ? `<span style="margin-left: auto; color: red; cursor: pointer; font-size: 0.8rem;" onclick="deleteMemoir(${memoir.id})">删除</span>` 
+                : '';
+            
+            const likeClass = memoir.is_liked > 0 ? 'active' : '';
+            
+            const topicHtml = memoir.topic_name ? `<span style="color: var(--primary-color); font-size: 0.9rem; margin-right: 10px; cursor: pointer;" onclick="loadMemoirs('', 0, ${memoir.topic_id})">#${escapeHtml(memoir.topic_name)}</span>` : '';
+            
+            card.innerHTML = `
+                <div class="post-header">
+                    <div style="margin-right: 10px;">${getAvatarHtml({name: memoir.author_name, avatar: memoir.author_avatar}, '40px')}</div>
+                    <div class="post-info">
+                        <h4>${escapeHtml(memoir.author_name)} <span style="font-weight:normal; font-size: 0.8rem;">(${escapeHtml(memoir.author_class)})</span></h4>
+                        <span>${new Date(memoir.created_at).toLocaleString()}</span>
+                    </div>
+                    ${deleteBtn}
+                </div>
+                <div class="post-content">${topicHtml}${escapeHtml(memoir.content)}</div>
+                ${imagesHtml}
+                ${mediaHtml}
+                <div class="post-actions">
+                    <div class="action-btn ${likeClass}" onclick="toggleLike(this, ${memoir.id})">
+                        <span>❤️</span> <span class="count">${memoir.likes_count}</span>
+                    </div>
+                    <div class="action-btn" onclick="toggleComments(${memoir.id})">
+                        <span>💬</span> <span class="count">${memoir.comments_count}</span>
+                    </div>
+                    ${currentUser && currentUser.id == memoir.user_id ? `
+                    <div class="action-btn" onclick="event.stopPropagation(); openExportModal('memoir', ${memoir.id})">
+                        <span>📥</span> <span>导出</span>
+                    </div>` : ''}
+                </div>
+                <div class="comments-section" id="comments-${memoir.id}">
+                    <div class="comments-list" id="comments-list-${memoir.id}"></div>
+                    <div class="comment-form" style="margin-top: 10px; display: flex; gap: 10px;">
+                        <input type="text" id="comment-input-${memoir.id}" placeholder="写下你的评论..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.8rem;" onclick="addComment(${memoir.id})">发送</button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+    </script>
 </body>
 </html>
