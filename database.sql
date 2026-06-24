@@ -258,3 +258,26 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     INDEX idx_ip_time (ip_address, attempt_time),
     INDEX idx_username_time (username, attempt_time)
 );
+
+-- 搜索历史表
+CREATE TABLE IF NOT EXISTS search_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    keyword VARCHAR(200) NOT NULL,
+    search_type ENUM('memoir', 'user', 'album', 'photo', 'all') DEFAULT 'all',
+    result_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_keyword (keyword),
+    INDEX idx_created_at (created_at)
+);
+
+-- 热门搜索词表
+CREATE TABLE IF NOT EXISTS hot_searches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    keyword VARCHAR(200) NOT NULL UNIQUE,
+    search_count INT DEFAULT 0,
+    last_search_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_search_count (search_count),
+    INDEX idx_last_search (last_search_at)
+);

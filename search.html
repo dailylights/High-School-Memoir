@@ -5,14 +5,1013 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>搜索 - 高中回忆录</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --danger-color: #e74c3c;
+            --info-color: #0984e3;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f6fa 0%, #dfe6e9 100%);
+            min-height: 100vh;
+        }
+
+        .search-page-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        /* Hero Search Section */
+        .search-hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #a29bfe 100%);
+            border-radius: 20px;
+            padding: 40px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(108, 92, 231, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .search-hero h1 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        .search-hero p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .main-search-box {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+
+        .main-search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .main-search-box input:focus {
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.4);
+        }
+
+        .main-search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
+        }
+
+        .filter-toggle-btn {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Hot Searches in Hero */
+        .hot-search-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .hot-search-tags .label {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .hot-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .hot-tag:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .hot-tag.hot {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: rgba(231, 76, 60, 0.5);
+        }
+
+        /* Advanced Filters Panel */
+        .filters-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .filters-panel.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #2d3436;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-group label .icon {
+            font-size: 1rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #2d3436;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .filter-group input[type="date"] {
+            font-family: inherit;
+        }
+
+        .filter-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .filter-actions button {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-reset-btn {
+            background: #f1f2f6;
+            color: #636e72;
+            border: none;
+        }
+
+        .filter-reset-btn:hover {
+            background: #dfe6e9;
+        }
+
+        .filter-apply-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .filter-apply-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        /* Content Layout */
+        .search-content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .search-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Sidebar */
+        .search-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f2f6;
+        }
+
+        .sidebar-card-title .icon {
+            font-size: 1.2rem;
+        }
+
+        /* Search History */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: #e9ecef;
+        }
+
+        .history-item .history-icon {
+            color: #636e72;
+            font-size: 0.9rem;
+        }
+
+        .history-item .history-keyword {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #2d3436;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item .history-type {
+            font-size: 0.75rem;
+            color: #a29bfe;
+            background: rgba(162, 155, 254, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .history-item .history-delete {
+            color: #dfe6e9;
+            cursor: pointer;
+            padding: 2px;
+            transition: color 0.2s;
+        }
+
+        .history-item .history-delete:hover {
+            color: var(--danger-color);
+        }
+
+        .clear-history-btn {
+            width: 100%;
+            padding: 10px;
+            background: #fff5f5;
+            color: var(--danger-color);
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .clear-history-btn:hover {
+            background: var(--danger-color);
+            color: white;
+            border-color: var(--danger-color);
+        }
+
+        .no-history {
+            text-align: center;
+            color: #a29bfe;
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        /* Popular Searches */
+        .popular-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .popular-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .popular-item:hover {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+            transform: translateX(3px);
+        }
+
+        .popular-rank {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .popular-rank.top3 {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+        }
+
+        .popular-keyword {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #2d3436;
+        }
+
+        .popular-count {
+            font-size: 0.8rem;
+            color: #a29bfe;
+            font-weight: 600;
+        }
+
+        /* Main Results Area */
+        .results-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Tabs */
+        .results-tabs {
+            background: white;
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #636e72;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.35);
+        }
+
+        .tab-btn .count {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .tab-btn:not(.active) .count {
+            background: #e9ecef;
+            color: #636e72;
+        }
+
+        /* Results Card */
+        .results-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .results-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #f1f2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-header h3 {
+            font-size: 1rem;
+            color: #2d3436;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .results-header .result-count {
+            font-size: 0.9rem;
+            color: #a29bfe;
+            font-weight: 600;
+        }
+
+        /* Results Content */
+        .results-content {
+            padding: 20px 25px;
+            min-height: 300px;
+        }
+
+        .loading-state,
+        .empty-state,
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #636e72;
+        }
+
+        .loading-state .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e9ecef;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h4 {
+            font-size: 1.2rem;
+            color: #2d3436;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            color: #a29bfe;
+        }
+
+        .error-state {
+            color: var(--danger-color);
+        }
+
+        .error-state .error-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Memoir Result Item */
+        .memoir-result-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f2f6;
+            transition: background 0.2s;
+        }
+
+        .memoir-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .memoir-result-item:hover {
+            background: #fafafa;
+            margin: 0 -25px;
+            padding: 20px 25px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .result-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .result-user-info h4 {
+            font-size: 0.95rem;
+            color: #2d3436;
+            margin-bottom: 2px;
+        }
+
+        .result-user-info span {
+            font-size: 0.8rem;
+            color: #a29bfe;
+        }
+
+        .result-content {
+            font-size: 0.95rem;
+            color: #2d3436;
+            line-height: 1.7;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .result-images {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .result-images img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .result-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .result-footer {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #636e72;
+        }
+
+        .result-footer span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .result-topic {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        /* User Result Item */
+        .user-result-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f2f6;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-avatar-large {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .user-result-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-result-info h4 {
+            font-size: 1rem;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+
+        .user-result-info p {
+            font-size: 0.85rem;
+            color: #636e72;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-result-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #a29bfe;
+        }
+
+        .user-result-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Album Result Item */
+        .album-result-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f2f6;
+            display: flex;
+            gap: 15px;
+        }
+
+        .album-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .album-cover {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-result-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .album-result-info h4 {
+            font-size: 1rem;
+            color: #2d3436;
+            margin-bottom: 6px;
+        }
+
+        .album-result-info p {
+            font-size: 0.85rem;
+            color: #636e72;
+            margin-bottom: 8px;
+        }
+
+        .album-meta {
+            font-size: 0.8rem;
+            color: #a29bfe;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Photo Grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .photo-grid-item {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .photo-grid-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .photo-grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-grid-item .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+            color: white;
+            padding: 8px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Pagination */
+        .search-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px;
+            border-top: 1px solid #f1f2f6;
+        }
+
+        .page-btn {
+            min-width: 40px;
+            height: 40px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #636e72;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-color: transparent;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            background: #f8f9fa;
+            color: #dfe6e9;
+            cursor: not-allowed;
+        }
+
+        /* Quick Filter Chips */
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .quick-filter-chip {
+            padding: 8px 16px;
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter-chip:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .quick-filter-chip.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Login Prompt */
+        .login-prompt {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1), rgba(162, 155, 254, 0.1));
+            border: 2px dashed rgba(108, 92, 231, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-prompt p {
+            color: #636e72;
+            margin-bottom: 15px;
+        }
+
+        .login-prompt a {
+            display: inline-block;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .login-prompt a:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Scrollbar */
+        .history-list::-webkit-scrollbar,
+        .results-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb,
+        .results-content::-webkit-scrollbar-thumb {
+            background: #dfe6e9;
+            border-radius: 3px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb:hover,
+        .results-content::-webkit-scrollbar-thumb:hover {
+            background: #a29bfe;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-hero {
+                padding: 25px 20px;
+            }
+
+            .search-hero h1 {
+                font-size: 1.4rem;
+            }
+
+            .main-search-box {
+                flex-direction: column;
+            }
+
+            .main-search-box button {
+                width: 100%;
+            }
+
+            .filter-toggle-btn {
+                width: 100%;
+            }
+
+            .results-tabs {
+                padding: 6px;
+            }
+
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .user-result-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .user-result-stats {
+                justify-content: center;
+            }
+        }
+
+        /* Avatar images */
+        .result-avatar img,
+        .user-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo"><a href="index.html">High School Memoir</a></div>
-        <div class="search-bar" style="max-width: 500px;">
-            <span>🔍</span>
-            <input type="text" id="search-input" placeholder="搜索回忆录内容..." autofocus>
-        </div>
         <div class="nav-links" id="nav-auth">
             <a href="index.html" class="nav-item">首页</a>
             <a href="login.html" class="nav-item">登录</a>
@@ -20,21 +1019,890 @@
         </div>
     </nav>
 
-    <div class="container" style="max-width: 800px;">
-        <main style="width: 100%;">
-            <h2 style="margin-bottom: 20px;">搜索回忆录</h2>
-            <div id="memoir-feed" data-mode="search">
-                <div style="padding: 40px; text-align: center; color: #888;">
-                    <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
-                    <p>输入关键词搜索回忆录</p>
-                    <p style="font-size: 0.9rem; margin-top: 10px;">支持搜索回忆录内容、作者、话题</p>
+    <div class="search-page-wrapper">
+        <!-- Hero Search Section -->
+        <div class="search-hero">
+            <h1>探索回忆录</h1>
+            <p>搜索内容、作者、话题，找到你想要的回忆</p>
+            
+            <div class="main-search-box">
+                <input type="text" id="main-search-input" placeholder="输入关键词搜索..." autocomplete="off">
+                <button onclick="performSearch()">
+                    <span>🔍</span> 搜索
+                </button>
+                <button class="filter-toggle-btn" onclick="toggleFilters()">
+                    <span>⚙️</span> 筛选
+                </button>
+            </div>
+
+            <!-- Hot Search Tags -->
+            <div class="hot-search-tags" id="hot-search-tags">
+                <span class="label">🔥 热门搜索：</span>
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Advanced Filters Panel -->
+        <div class="filters-panel" id="filters-panel">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label><span class="icon">👤</span> 作者</label>
+                    <select id="filter-author">
+                        <option value="">全部作者</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label><span class="icon">🏫</span> 班级</label>
+                    <select id="filter-class">
+                        <option value="">全部班级</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label><span class="icon">🎓</span> 届别</label>
+                    <select id="filter-graduation">
+                        <option value="">全部届别</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label><span class="icon">#️⃣</span> 话题</label>
+                    <select id="filter-topic">
+                        <option value="">全部话题</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label><span class="icon">📅</span> 开始日期</label>
+                    <input type="date" id="filter-date-from">
+                </div>
+                
+                <div class="filter-group">
+                    <label><span class="icon">📅</span> 结束日期</label>
+                    <input type="date" id="filter-date-to">
+                </div>
+
+                <div class="filter-group">
+                    <label><span class="icon">🖼️</span> 媒体类型</label>
+                    <select id="filter-media">
+                        <option value="-1">不限</option>
+                        <option value="1">有图片/视频</option>
+                        <option value="0">纯文字</option>
+                    </select>
                 </div>
             </div>
-            
-            <div id="pagination" class="pagination"></div>
-        </main>
+
+            <div class="filter-actions">
+                <button class="filter-reset-btn" onclick="resetFilters()">重置筛选</button>
+                <button class="filter-apply-btn" onclick="applyFilters()">应用筛选</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="search-content">
+            <!-- Left Sidebar -->
+            <div class="search-sidebar">
+                <!-- Search History -->
+                <div class="sidebar-card" id="history-card">
+                    <div class="sidebar-card-title">
+                        <span class="icon">🕐</span> 搜索历史
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <!-- Dynamically populated -->
+                    </div>
+                    <button class="clear-history-btn" id="clear-history-btn" onclick="clearHistory()" style="display: none;">
+                        清空历史记录
+                    </button>
+                </div>
+
+                <!-- Popular Searches -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">
+                        <span class="icon">🔥</span> 热门搜索
+                    </div>
+                    <div class="popular-list" id="popular-list">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Results Area -->
+            <div class="results-area">
+                <!-- Tabs -->
+                <div class="results-tabs">
+                    <button class="tab-btn active" data-type="all" onclick="switchTab('all')">
+                        <span>📋</span> 全部 <span class="count" id="count-all">0</span>
+                    </button>
+                    <button class="tab-btn" data-type="memoir" onclick="switchTab('memoir')">
+                        <span>📝</span> 回忆录 <span class="count" id="count-memoir">0</span>
+                    </button>
+                    <button class="tab-btn" data-type="user" onclick="switchTab('user')">
+                        <span>👤</span> 用户 <span class="count" id="count-user">0</span>
+                    </button>
+                    <button class="tab-btn" data-type="album" onclick="switchTab('album')">
+                        <span>📚</span> 相册 <span class="count" id="count-album">0</span>
+                    </button>
+                    <button class="tab-btn" data-type="photo" onclick="switchTab('photo')">
+                        <span>📷</span> 照片 <span class="count" id="count-photo">0</span>
+                    </button>
+                </div>
+
+                <!-- Results Card -->
+                <div class="results-card">
+                    <div class="results-header">
+                        <h3 id="results-title">
+                            <span>📋</span> 搜索结果
+                        </h3>
+                        <span class="result-count" id="result-count-text">共 0 条结果</span>
+                    </div>
+
+                    <div class="results-content" id="results-content">
+                        <div class="empty-state">
+                            <div class="empty-icon">🔍</div>
+                            <h4>开始搜索</h4>
+                            <p>输入关键词，发现精彩回忆</p>
+                        </div>
+                    </div>
+
+                    <div class="search-pagination" id="search-pagination" style="display: none;">
+                        <!-- Pagination buttons -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/main.js"></script>
+    <script>
+        // State
+        let currentTab = 'all';
+        let currentPage = 1;
+        let currentKeyword = '';
+        let isFiltersVisible = false;
+        let filtersData = {
+            classes: [],
+            graduations: [],
+            topics: []
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set up search input enter key
+            const searchInput = document.getElementById('main-search-input');
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // Load initial data
+            await Promise.all([
+                loadHotSearches(),
+                loadPopularSearches(),
+                loadFilters()
+            ]);
+
+            // Check session and load history
+            checkSession().then(() => {
+                if (currentUser) {
+                    loadSearchHistory();
+                }
+            });
+        });
+
+        // Load Filters Options
+        async function loadFilters() {
+            try {
+                const res = await fetch(`${API_BASE}search.php?action=get_filters`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    filtersData = {
+                        classes: data.classes || [],
+                        graduations: data.graduations || [],
+                        topics: data.topics || []
+                    };
+
+                    // Populate class dropdown
+                    const classSelect = document.getElementById('filter-class');
+                    filtersData.classes.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = `${c.name} ${c.graduation_year ? '(' + c.graduation_year + '届)' : ''}`;
+                        classSelect.appendChild(opt);
+                    });
+
+                    // Populate graduation dropdown
+                    const gradSelect = document.getElementById('filter-graduation');
+                    filtersData.graduations.forEach(g => {
+                        const opt = document.createElement('option');
+                        opt.value = g.id;
+                        opt.textContent = `${g.year}届${g.name ? ' - ' + g.name : ''}`;
+                        gradSelect.appendChild(opt);
+                    });
+
+                    // Populate topic dropdown
+                    const topicSelect = document.getElementById('filter-topic');
+                    filtersData.topics.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        topicSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Load filters failed', e);
+            }
+        }
+
+        // Load Hot Searches (for hero section)
+        async function loadHotSearches() {
+            try {
+                const res = await fetch(`${API_BASE}search.php?action=hot_searches&limit=8`);
+                const data = await res.json();
+                
+                const container = document.getElementById('hot-search-tags');
+                container.innerHTML = '<span class="label">🔥 热门搜索：</span>';
+                
+                if (data.success && data.hot_searches.length > 0) {
+                    data.hot_searches.forEach((item, index) => {
+                        const tag = document.createElement('span');
+                        tag.className = 'hot-tag' + (index < 3 ? ' hot' : '');
+                        tag.textContent = item.keyword;
+                        tag.onclick = () => {
+                            document.getElementById('main-search-input').value = item.keyword;
+                            performSearch(item.keyword);
+                        };
+                        container.appendChild(tag);
+                    });
+                } else {
+                    container.innerHTML = '<span class="label" style="color: rgba(255,255,255,0.7);">暂无热门搜索</span>';
+                }
+            } catch (e) {
+                console.error('Load hot searches failed', e);
+            }
+        }
+
+        // Load Popular Searches (for sidebar)
+        async function loadPopularSearches() {
+            try {
+                const res = await fetch(`${API_BASE}search.php?action=hot_searches&limit=10`);
+                const data = await res.json();
+                
+                const list = document.getElementById('popular-list');
+                
+                if (data.success && data.hot_searches.length > 0) {
+                    list.innerHTML = '';
+                    data.hot_searches.forEach((item, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'popular-item';
+                        div.onclick = () => {
+                            document.getElementById('main-search-input').value = item.keyword;
+                            performSearch(item.keyword);
+                        };
+                        div.innerHTML = `
+                            <span class="popular-rank ${index < 3 ? 'top3' : ''}">${index + 1}</span>
+                            <span class="popular-keyword">${escapeHtml(item.keyword)}</span>
+                            <span class="popular-count">${item.search_count}</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = '<div style="text-align: center; color: #a29bfe; padding: 20px 0;">暂无数据</div>';
+                }
+            } catch (e) {
+                console.error('Load popular searches failed', e);
+            }
+        }
+
+        // Load Search History
+        async function loadSearchHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}search.php?action=search_history&limit=20`);
+                const data = await res.json();
+                
+                const list = document.getElementById('history-list');
+                const clearBtn = document.getElementById('clear-history-btn');
+                
+                if (data.success && data.history.length > 0) {
+                    list.innerHTML = '';
+                    data.history.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        div.onclick = () => {
+                            document.getElementById('main-search-input').value = item.keyword;
+                            performSearch(item.keyword);
+                        };
+                        const typeLabels = {
+                            'all': '全部',
+                            'memoir': '回忆录',
+                            'user': '用户',
+                            'album': '相册',
+                            'photo': '照片'
+                        };
+                        div.innerHTML = `
+                            <span class="history-icon">⏰</span>
+                            <span class="history-keyword">${escapeHtml(item.keyword)}</span>
+                            <span class="history-type">${typeLabels[item.search_type] || '全部'}</span>
+                            <span class="history-delete" onclick="event.stopPropagation(); deleteHistoryItem('${escapeHtml(item.keyword)}')">×</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                    clearBtn.style.display = 'block';
+                } else {
+                    list.innerHTML = '<div class="no-history">暂无搜索历史</div>';
+                    clearBtn.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Load search history failed', e);
+            }
+        }
+
+        // Clear History
+        async function clearHistory() {
+            if (!confirm('确定要清空所有搜索历史吗？')) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}search.php?action=clear_history`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': getCSRFToken() }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    loadSearchHistory();
+                } else {
+                    alert(data.message || '清除失败');
+                }
+            } catch (e) {
+                console.error('Clear history failed', e);
+                alert('清除失败');
+            }
+        }
+
+        // Toggle Filters Panel
+        function toggleFilters() {
+            isFiltersVisible = !isFiltersVisible;
+            const panel = document.getElementById('filters-panel');
+            panel.classList.toggle('show', isFiltersVisible);
+        }
+
+        // Reset Filters
+        function resetFilters() {
+            document.getElementById('filter-author').value = '';
+            document.getElementById('filter-class').value = '';
+            document.getElementById('filter-graduation').value = '';
+            document.getElementById('filter-topic').value = '';
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            document.getElementById('filter-media').value = '-1';
+        }
+
+        // Apply Filters and Search
+        function applyFilters() {
+            performSearch();
+        }
+
+        // Get Filter Values
+        function getFilterValues() {
+            return {
+                author_id: document.getElementById('filter-author').value,
+                class_id: document.getElementById('filter-class').value,
+                graduation_id: document.getElementById('filter-graduation').value,
+                topic_id: document.getElementById('filter-topic').value,
+                date_from: document.getElementById('filter-date-from').value,
+                date_to: document.getElementById('filter-date-to').value,
+                has_media: document.getElementById('filter-media').value
+            };
+        }
+
+        // Perform Search
+        async function performSearch(keyword) {
+            const kw = keyword || document.getElementById('main-search-input').value.trim();
+            if (!kw) {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            currentKeyword = kw;
+            currentPage = 1;
+            
+            // Update URL
+            const url = new URL(window.location);
+            url.searchParams.set('q', kw);
+            window.history.pushState({}, '', url);
+            
+            // Show loading
+            showLoading();
+            
+            // Execute search based on current tab
+            await executeSearch();
+            
+            // Reload hot searches and history
+            await Promise.all([
+                loadHotSearches(),
+                loadPopularSearches(),
+                currentUser ? loadSearchHistory() : Promise.resolve()
+            ]);
+        }
+
+        // Show Loading State
+        function showLoading() {
+            const content = document.getElementById('results-content');
+            content.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>搜索中...</p>
+                </div>
+            `;
+            document.getElementById('search-pagination').style.display = 'none';
+        }
+
+        // Switch Tab
+        async function switchTab(type) {
+            currentTab = type;
+            currentPage = 1;
+            
+            // Update tab UI
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+            
+            // Execute search
+            if (currentKeyword) {
+                await executeSearch();
+            }
+        }
+
+        // Execute Search
+        async function executeSearch() {
+            const filters = getFilterValues();
+            const params = new URLSearchParams({
+                keyword: currentKeyword,
+                page: currentPage,
+                limit: 10,
+                ...filters
+            });
+            
+            // Remove empty filters
+            for (const [key, value] of Object.entries(filters)) {
+                if (value === '' || value === '-1') {
+                    params.delete(key);
+                }
+            }
+            
+            let endpoint = '';
+            let counts = { all: 0, memoir: 0, user: 0, album: 0, photo: 0 };
+            
+            try {
+                if (currentTab === 'all') {
+                    // Search all types
+                    const res = await fetch(`${API_BASE}search.php?action=search_all&${params.toString()}`);
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        counts = {
+                            all: (data.memoirs?.total || 0) + (data.users?.total || 0) + (data.albums?.total || 0) + (data.photos?.total || 0),
+                            memoir: data.memoirs?.total || 0,
+                            user: data.users?.total || 0,
+                            album: data.albums?.total || 0,
+                            photo: data.photos?.total || 0
+                        };
+                        
+                        renderAllResults(data);
+                    }
+                } else {
+                    // Search specific type
+                    const typeMap = {
+                        'memoir': 'search_memoirs',
+                        'user': 'search_users',
+                        'album': 'search_albums',
+                        'photo': 'search_photos'
+                    };
+                    endpoint = typeMap[currentTab];
+                    
+                    // For memoir search, include filters
+                    if (currentTab === 'memoir') {
+                        // Keep all filter params
+                    } else {
+                        // Remove unused params for other types
+                        params.delete('author_id');
+                        params.delete('class_id');
+                        params.delete('graduation_id');
+                        params.delete('topic_id');
+                        params.delete('date_from');
+                        params.delete('date_to');
+                        params.delete('has_media');
+                    }
+                    
+                    const res = await fetch(`${API_BASE}search.php?action=${endpoint}&${params.toString()}`);
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        counts[currentTab] = data.total;
+                        counts.all = data.total;
+                        renderTypeResults(data);
+                    }
+                }
+                
+                // Update counts
+                updateCounts(counts);
+                
+            } catch (e) {
+                console.error('Search failed', e);
+                showError('搜索失败，请稍后重试');
+            }
+        }
+
+        // Update Tab Counts
+        function updateCounts(counts) {
+            document.getElementById('count-all').textContent = counts.all;
+            document.getElementById('count-memoir').textContent = counts.memoir;
+            document.getElementById('count-user').textContent = counts.user;
+            document.getElementById('count-album').textContent = counts.album;
+            document.getElementById('count-photo').textContent = counts.photo;
+        }
+
+        // Render All Results
+        function renderAllResults(data) {
+            const content = document.getElementById('results-content');
+            const total = (data.memoirs?.total || 0) + (data.users?.total || 0) + (data.albums?.total || 0) + (data.photos?.total || 0);
+            
+            document.getElementById('result-count-text').textContent = `共 ${total} 条结果`;
+            
+            if (total === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h4>未找到相关结果</h4>
+                        <p>换个关键词试试吧</p>
+                    </div>
+                `;
+                document.getElementById('search-pagination').style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            
+            // Memoirs Section
+            if (data.memoirs?.items?.length > 0) {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="font-size: 1rem; color: #2d3436; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>📝</span> 回忆录 <span style="font-size: 0.8rem; color: #a29bfe;">(${data.memoirs.total})</span>
+                        </h4>
+                        ${data.memoirs.items.slice(0, 3).map(m => renderMemoirItem(m)).join('')}
+                        ${data.memoirs.items.length > 3 ? `<div style="text-align: center; padding: 10px;"><button class="btn" style="background: #f8f9fa; color: var(--primary-color);" onclick="switchTab('memoir'); performSearch(currentKeyword);">查看更多回忆录 →</button></div>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Users Section
+            if (data.users?.items?.length > 0) {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="font-size: 1rem; color: #2d3436; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>👤</span> 用户 <span style="font-size: 0.8rem; color: #a29bfe;">(${data.users.total})</span>
+                        </h4>
+                        ${data.users.items.slice(0, 3).map(u => renderUserItem(u)).join('')}
+                        ${data.users.items.length > 3 ? `<div style="text-align: center; padding: 10px;"><button class="btn" style="background: #f8f9fa; color: var(--primary-color);" onclick="switchTab('user'); performSearch(currentKeyword);">查看更多用户 →</button></div>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Albums Section
+            if (data.albums?.items?.length > 0) {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="font-size: 1rem; color: #2d3436; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>📚</span> 相册 <span style="font-size: 0.8rem; color: #a29bfe;">(${data.albums.total})</span>
+                        </h4>
+                        ${data.albums.items.slice(0, 2).map(a => renderAlbumItem(a)).join('')}
+                        ${data.albums.items.length > 2 ? `<div style="text-align: center; padding: 10px;"><button class="btn" style="background: #f8f9fa; color: var(--primary-color);" onclick="switchTab('album'); performSearch(currentKeyword);">查看更多相册 →</button></div>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Photos Section
+            if (data.photos?.items?.length > 0) {
+                html += `
+                    <div>
+                        <h4 style="font-size: 1rem; color: #2d3436; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>📷</span> 照片 <span style="font-size: 0.8rem; color: #a29bfe;">(${data.photos.total})</span>
+                        </h4>
+                        <div class="photo-grid">
+                            ${data.photos.items.slice(0, 9).map(p => `
+                                <div class="photo-grid-item" onclick="window.open('${escapeHtml(p.url || p.file_path || '#')}', '_blank')">
+                                    <img src="${escapeHtml(p.url || p.file_path || '')}" alt="${escapeHtml(p.title || '')}">
+                                    <div class="photo-overlay">❤️ ${p.like_count || 0}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${data.photos.items.length > 9 ? `<div style="text-align: center; padding: 10px;"><button class="btn" style="background: #f8f9fa; color: var(--primary-color);" onclick="switchTab('photo'); performSearch(currentKeyword);">查看更多照片 →</button></div>` : ''}
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
+            
+            // Show pagination for all results
+            document.getElementById('search-pagination').style.display = 'none';
+        }
+
+        // Render Type Results
+        function renderTypeResults(data) {
+            const content = document.getElementById('results-content');
+            const typeLabels = {
+                'memoir': '回忆录',
+                'user': '用户',
+                'album': '相册',
+                'photo': '照片'
+            };
+            
+            document.getElementById('result-count-text').textContent = `共 ${data.total} 条${typeLabels[currentTab]}`;
+            
+            if (!data.items || data.items.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h4>未找到相关${typeLabels[currentTab]}</h4>
+                        <p>换个关键词试试吧</p>
+                    </div>
+                `;
+                document.getElementById('search-pagination').style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            
+            switch (currentTab) {
+                case 'memoir':
+                    data.items.forEach(m => {
+                        html += renderMemoirItem(m);
+                    });
+                    break;
+                case 'user':
+                    html = '<div style="display: flex; flex-direction: column;">';
+                    data.items.forEach(u => {
+                        html += renderUserItem(u);
+                    });
+                    html += '</div>';
+                    break;
+                case 'album':
+                    html = '<div style="display: flex; flex-direction: column;">';
+                    data.items.forEach(a => {
+                        html += renderAlbumItem(a);
+                    });
+                    html += '</div>';
+                    break;
+                case 'photo':
+                    html = `<div class="photo-grid">`;
+                    data.items.forEach(p => {
+                        html += `
+                            <div class="photo-grid-item" onclick="window.open('${escapeHtml(p.url || p.file_path || '#')}', '_blank')">
+                                <img src="${escapeHtml(p.url || p.file_path || '')}" alt="${escapeHtml(p.title || '')}">
+                                <div class="photo-overlay">❤️ ${p.like_count || 0}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    break;
+            }
+            
+            content.innerHTML = html;
+            
+            // Render pagination
+            if (data.total_pages > 1) {
+                renderPagination(data.page, data.total_pages);
+                document.getElementById('search-pagination').style.display = 'flex';
+            } else {
+                document.getElementById('search-pagination').style.display = 'none';
+            }
+        }
+
+        // Render Memoir Item
+        function renderMemoirItem(m) {
+            const images = m.images_array || JSON.parse(m.images || '[]');
+            let imagesHtml = '';
+            
+            if (images.length > 0) {
+                imagesHtml = '<div class="result-images">';
+                images.slice(0, 4).forEach(img => {
+                    imagesHtml += `<img src="${escapeHtml(img)}" onclick="window.open('${escapeHtml(img)}', '_blank')">`;
+                });
+                if (images.length > 4) {
+                    imagesHtml += `<div style="width:100px;height:100px;display:flex;align-items:center;justify-content:center;background:#f1f2f6;border-radius:8px;color:#636e72;font-size:0.9rem;">+${images.length - 4}</div>`;
+                }
+                imagesHtml += '</div>';
+            }
+            
+            const topicHtml = m.topic_name ? `<span class="result-topic">#${escapeHtml(m.topic_name)}</span>` : '';
+            
+            return `
+                <div class="memoir-result-item">
+                    <div class="result-header">
+                        ${getAvatarHtml({name: m.author_name, avatar: m.author_avatar}, '44px')}
+                        <div class="result-user-info">
+                            <h4>${escapeHtml(m.author_name)}</h4>
+                            <span>${escapeHtml(m.author_class || '')} · ${new Date(m.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    ${topicHtml}
+                    <div class="result-content">${escapeHtml(m.content)}</div>
+                    ${imagesHtml}
+                    <div class="result-footer">
+                        <span>❤️ ${m.likes_count || 0}</span>
+                        <span>💬 ${m.comments_count || 0}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render User Item
+        function renderUserItem(u) {
+            return `
+                <div class="user-result-item">
+                    ${getAvatarHtml({name: u.name, avatar: u.avatar}, '60px')}
+                    <div class="user-result-info">
+                        <h4>${escapeHtml(u.name)}</h4>
+                        <p>
+                            <span>@${escapeHtml(u.username || '')}</span>
+                            <span>${escapeHtml(u.class || '')}</span>
+                        </p>
+                        <div class="user-result-stats">
+                            <span>📝 ${u.memoir_count || 0} 回忆</span>
+                            <span>👥 ${u.follower_count || 0} 粉丝</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Album Item
+        function renderAlbumItem(a) {
+            return `
+                <div class="album-result-item">
+                    <div class="album-cover">
+                        ${a.cover_image ? `<img src="${escapeHtml(a.cover_image)}" alt="">` : '📚'}
+                    </div>
+                    <div class="album-result-info">
+                        <h4>${escapeHtml(a.name)}</h4>
+                        <p>${escapeHtml(a.description || '暂无描述')}</p>
+                        <div class="album-meta">
+                            <span>👤 ${escapeHtml(a.owner_name || '')}</span>
+                            <span>📷 ${a.photo_count || 0} 张照片</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show Error
+        function showError(message) {
+            const content = document.getElementById('results-content');
+            content.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h4>出错了</h4>
+                    <p>${escapeHtml(message)}</p>
+                </div>
+            `;
+        }
+
+        // Render Pagination
+        function renderPagination(current, total) {
+            const container = document.getElementById('search-pagination');
+            container.innerHTML = '';
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '‹';
+            prevBtn.disabled = current === 1;
+            prevBtn.onclick = () => goToPage(current - 1);
+            container.appendChild(prevBtn);
+            
+            // Page numbers
+            const maxVisible = 5;
+            let start = Math.max(1, current - Math.floor(maxVisible / 2));
+            let end = Math.min(total, start + maxVisible - 1);
+            
+            if (end - start + 1 < maxVisible) {
+                start = Math.max(1, end - maxVisible + 1);
+            }
+            
+            if (start > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => goToPage(1);
+                container.appendChild(firstBtn);
+                
+                if (start > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    container.appendChild(dots);
+                }
+            }
+            
+            for (let i = start; i <= end; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (i === current ? ' active' : '');
+                btn.innerText = i;
+                btn.onclick = () => goToPage(i);
+                container.appendChild(btn);
+            }
+            
+            if (end < total) {
+                if (end < total - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 5px';
+                    container.appendChild(dots);
+                }
+                
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.innerText = total;
+                lastBtn.onclick = () => goToPage(total);
+                container.appendChild(lastBtn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '›';
+            nextBtn.disabled = current === total;
+            nextBtn.onclick = () => goToPage(current + 1);
+            container.appendChild(nextBtn);
+        }
+
+        // Go to Page
+        async function goToPage(page) {
+            currentPage = page;
+            await executeSearch();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Delete History Item
+        async function deleteHistoryItem(keyword) {
+            // Just clear and reload - backend doesn't support single item delete
+            // User can clear all
+        }
+
+        // Check for URL query on load
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get('q');
+            if (q) {
+                document.getElementById('main-search-input').value = q;
+                performSearch(q);
+            }
+        })();
+    </script>
 </body>
 </html>
