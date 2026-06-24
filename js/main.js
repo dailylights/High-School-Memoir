@@ -1060,8 +1060,8 @@ async function loadNotifications() {
             div.className = 'notification-item';
             const actionText = latestNotification.type === 'like' ? '赞了你的回忆' : '评论了你的回忆';
             div.innerHTML = `
-                <div style="font-size: 0.9rem;"><strong>${latestNotification.actor_name}</strong> ${actionText}</div>
-                <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">"${latestNotification.memoir_preview.substring(0, 20)}..."</div>
+                <div style="font-size: 0.9rem;"><strong>${escapeHtml(latestNotification.actor_name)}</strong> ${actionText}</div>
+                <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">"${escapeHtml(latestNotification.memoir_preview.substring(0, 20))}..."</div>
                 <div style="font-size: 0.7rem; color: #999; margin-top: 5px;">${new Date(latestNotification.created_at).toLocaleString()}</div>
             `;
             list.appendChild(div);

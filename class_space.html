@@ -1190,8 +1190,8 @@
 
         function renderMemberCard(member, showAdmin = false) {
             const avatar = member.avatar 
-                ? `<img src="${member.avatar}">` 
-                : member.name[0];
+                ? `<img src="${escapeHtml(member.avatar)}">` 
+                : escapeHtml(member.name[0] || '?');
             
             let adminHtml = '';
             if (showAdmin && member.role !== 'monitor' && classInfo.my_role === 'monitor') {
